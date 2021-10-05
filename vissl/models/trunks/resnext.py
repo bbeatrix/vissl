@@ -25,6 +25,7 @@ from vissl.models.trunks import register_model_trunk
 
 # For more depths, add the block config here
 BLOCK_CONFIG = {
+    18: (2, 2, 2, 2),
     50: (3, 4, 6, 3),
     101: (3, 4, 23, 3),
     152: (3, 8, 36, 3),
@@ -33,6 +34,7 @@ BLOCK_CONFIG = {
 
 
 class SUPPORTED_DEPTHS(int, Enum):
+    RN18 = 18
     RN50 = 50
     RN101 = 101
     RN152 = 152
@@ -70,6 +72,7 @@ class ResNeXt(nn.Module):
         )
 
         self.trunk_config = self.model_config.TRUNK.RESNETS
+        self.image_size = self.trunk_config.IMAGE_SIZE
         self.depth = SUPPORTED_DEPTHS(self.trunk_config.DEPTH)
         self.width_multiplier = self.trunk_config.WIDTH_MULTIPLIER
         self._norm_layer = _get_norm(self.trunk_config)
@@ -106,14 +109,25 @@ class ResNeXt(nn.Module):
         # and re-construct the conv1
         self.input_channels = INPUT_CHANNEL[self.model_config.INPUT_TYPE]
 
-        model_conv1 = nn.Conv2d(
-            self.input_channels,
-            model.inplanes,
-            kernel_size=7,
-            stride=2,
-            padding=3,
-            bias=False,
-        )
+        if self.image_size < 200:
+            model_conv1 = nn.Conv2d(
+                self.input_channels,
+                model.inplanes,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+            )
+
+        else:
+            model_conv1 = nn.Conv2d(
+                self.input_channels,
+                model.inplanes,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                bias=False,
+            )
         model_bn1 = self._norm_layer(model.inplanes)
         model_relu1 = model.relu
         model_maxpool = model.maxpool
