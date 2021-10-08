@@ -567,6 +567,9 @@ config:
       # ResNe(X)t params
       # ------------------------------------------------------------- #
       RESNETS:
+        BLOCK: Bottleneck # Bottleneck | BasicBlock
+        FIRST_CONV_ORIG: True # use first conv layer for imagenet 
+        FIRST_MAXPOOL_ORIG: True # use first maxpool layer for imagenet
         DEPTH: 50
         WIDTH_MULTIPLIER: 1
         NORM: BatchNorm    # BatchNorm | LayerNorm | GroupNorm
