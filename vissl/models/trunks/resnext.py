@@ -10,7 +10,7 @@ from typing import List
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from torchvision.models.resnet import Bottleneck
+from torchvision.models.resnet import Bottleneck, BasicBlock
 from vissl.config import AttrDict
 from vissl.data.collators.collator_helper import MultiDimensionalTensor
 from vissl.models.model_helpers import (
@@ -72,7 +72,9 @@ class ResNeXt(nn.Module):
         )
 
         self.trunk_config = self.model_config.TRUNK.RESNETS
-        self.image_size = self.trunk_config.IMAGE_SIZE
+        self.block = self.trunk_config.BLOCK
+        self.first_conv_orig = self.trunk_config.FIRST_CONV_ORIG
+        self.first_maxpool_orig = self.trunk_config.FIRST_MAXPOOL_ORIG
         self.depth = SUPPORTED_DEPTHS(self.trunk_config.DEPTH)
         self.width_multiplier = self.trunk_config.WIDTH_MULTIPLIER
         self._norm_layer = _get_norm(self.trunk_config)
@@ -94,7 +96,7 @@ class ResNeXt(nn.Module):
         )
 
         model = models.resnet.ResNet(
-            block=Bottleneck,
+            block=self.block,
             layers=(n1, n2, n3, n4),
             zero_init_residual=self.zero_init_residual,
             groups=self.groups,
@@ -109,7 +111,16 @@ class ResNeXt(nn.Module):
         # and re-construct the conv1
         self.input_channels = INPUT_CHANNEL[self.model_config.INPUT_TYPE]
 
-        if self.image_size < 200:
+        if self.first_conv_orig:
+            model_conv1 = nn.Conv2d(
+                self.input_channels,
+                model.inplanes,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                bias=False,
+            )
+        else:
             model_conv1 = nn.Conv2d(
                 self.input_channels,
                 model.inplanes,
@@ -119,22 +130,16 @@ class ResNeXt(nn.Module):
                 bias=False,
             )
 
-        else:
-            model_conv1 = nn.Conv2d(
-                self.input_channels,
-                model.inplanes,
-                kernel_size=7,
-                stride=2,
-                padding=3,
-                bias=False,
-            )
         model_bn1 = self._norm_layer(model.inplanes)
         model_relu1 = model.relu
-        model_maxpool = model.maxpool
+        if self.first_maxpool_orig: 
+            model_maxpool = model.maxpool
+        else:
+            model_maxpool = nn.MaxPool2d(kernel_size=1, stride=1)
         model_avgpool = model.avgpool
-        model_layer1 = model._make_layer(Bottleneck, dim_inner, n1)
-        model_layer2 = model._make_layer(Bottleneck, dim_inner * 2, n2, stride=2)
-        model_layer3 = model._make_layer(Bottleneck, dim_inner * 4, n3, stride=2)
+        model_layer1 = model._make_layer(self.block, dim_inner, n1)
+        model_layer2 = model._make_layer(self.block, dim_inner * 2, n2, stride=2)
+        model_layer3 = model._make_layer(self.block, dim_inner * 4, n3, stride=2)
 
         # For some models like Colorization https://arxiv.org/abs/1603.08511,
         # due to the higher spatial resolution desired for pixel wise task, we
@@ -142,7 +147,7 @@ class ResNeXt(nn.Module):
         # behavior so support only those.
         safe_stride = SUPPORTED_L4_STRIDE(self.trunk_config.LAYER4_STRIDE)
         model_layer4 = model._make_layer(
-            Bottleneck, dim_inner * 8, n4, stride=safe_stride
+            self.block, dim_inner * 8, n4, stride=safe_stride
         )
 
         # we mapped the layers of resnet model into feature blocks to facilitate
