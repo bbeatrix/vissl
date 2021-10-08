@@ -1,0 +1,121 @@
+# @package _global_
+config:
+  VERBOSE: True
+  LOG_FREQUENCY: 10
+  TEST_ONLY: False
+  TEST_MODEL: True
+  TEST_EVERY_NUM_EPOCH: 1
+  SEED_VALUE: 0
+  MULTI_PROCESSING_METHOD: forkserver
+  HOOKS:
+    PERF_STATS:
+      MONITOR_PERF_STATS: True
+      ROLLING_BTIME_FREQ: 313
+    TENSORBOARD_SETUP:
+      USE_TENSORBOARD: True
+  DATA:
+    NUM_DATALOADER_WORKERS: 5
+    TRAIN:
+      DATA_SOURCES: [torchvision_dataset]
+      LABEL_SOURCES: [torchvision_dataset]
+      DATASET_NAMES: [CIFAR10]
+      BATCHSIZE_PER_REPLICA: 256
+      TRANSFORMS:
+        - name: RandomResizedCrop
+          size: 32
+        - name: RandomHorizontalFlip
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+      MMAP_MODE: True
+      COPY_TO_LOCAL_DISK: False
+      COPY_DESTINATION_DIR: /tmp/cifar10/
+    TEST:
+      DATA_SOURCES: [torchvision_dataset]
+      LABEL_SOURCES: [torchvision_dataset]
+      DATASET_NAMES: [CIFAR10]
+      BATCHSIZE_PER_REPLICA: 256
+      TRANSFORMS:
+        - name: Resize
+          size: 36
+        - name: CenterCrop
+          size: 32
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+      MMAP_MODE: True
+      COPY_TO_LOCAL_DISK: False
+      COPY_DESTINATION_DIR: /tmp/cifar10/
+  METERS:
+    name: accuracy_list_meter
+    accuracy_list_meter:
+      num_meters: 1
+      topk_values: [1, 5]
+  TRAINER:
+    TRAIN_STEP_NAME: standard_train_step
+  MODEL:
+    FEATURE_EVAL_SETTINGS:
+      EVAL_MODE_ON: True
+      FREEZE_TRUNK_ONLY: True
+      SHOULD_FLATTEN_FEATS: False
+      LINEAR_EVAL_FEAT_POOL_OPS_MAP: [
+        ["res5", ["AdaptiveAvgPool2d", [[1, 1]]]],
+      ]
+    TRUNK:
+      NAME: resnet
+      RESNETS:
+        BLOCK: BasicBlock
+        FIRST_CONV_ORIG: False
+        FIRST_MAXPOOL_ORIG: False
+        DEPTH: 18
+        WIDTH_MULTIPLIER: 1
+    HEAD:
+      PARAMS: [
+        ["eval_mlp", {"in_channels": 512, "dims": [512, 10]}],
+      ]
+    WEIGHTS_INIT:
+      PARAMS_FILE: "./outputs/*.torch"
+      STATE_DICT_KEY_NAME: classy_state_dict
+      # STATE_DICT_KEY_NAME: model_state_dict
+    SYNC_BN_CONFIG:
+      CONVERT_BN_TO_SYNC_BN: True
+      SYNC_BN_TYPE: apex
+      GROUP_SIZE: 0
+  LOSS:
+    name: cross_entropy_multiple_output_single_target
+    cross_entropy_multiple_output_single_target:
+      ignore_index: -1
+  OPTIMIZER:
+      name: sgd
+      # In the OSS Caffe2 benchmark, RN50 models use 1e-4 and AlexNet models 5e-4
+      weight_decay: 0.0005
+      momentum: 0.9
+      num_epochs: 30
+      nesterov: True
+      regularize_bn: False
+      regularize_bias: True
+      param_schedulers:
+        lr:
+          auto_lr_scaling:
+            auto_scale: True
+            base_value: 0.01
+            base_lr_batch_size: 256
+          name: multistep
+          values: [0.01, 0.001, 0.0001, 0.00001]
+          milestones: [8, 16, 24]
+          update_interval: epoch
+  DISTRIBUTED:
+    BACKEND: nccl
+    NUM_NODES: 1
+    NUM_PROC_PER_NODE: 1
+    INIT_METHOD: tcp
+    RUN_ID: auto
+  MACHINE:
+    DEVICE: gpu
+  CHECKPOINT:
+    DIR: "./outputs"
+    AUTO_RESUME: False
+    CHECKPOINT_FREQUENCY: 1
+    OVERWRITE_EXISTING: True

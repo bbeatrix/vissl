@@ -1,22 +1,23 @@
 # @package _global_
 config:
-  VERBOSE: False
-  LOG_FREQUENCY: 10
+  VERBOSE: True
+  LOG_FREQUENCY: 100
   TEST_ONLY: False
-  TEST_MODEL: False
+  TEST_MODEL: True
+  TEST_EVERY_NUM_EPOCH: 1
   SEED_VALUE: 0
   MULTI_PROCESSING_METHOD: forkserver
   HOOKS:
     PERF_STATS:
       MONITOR_PERF_STATS: True
-      PERF_STAT_FREQUENCY: 10
-      ROLLING_BTIME_FREQ: 5
+      ROLLING_BTIME_FREQ: 313
     TENSORBOARD_SETUP:
       USE_TENSORBOARD: True
   DATA:
     NUM_DATALOADER_WORKERS: 5
     TRAIN:
       DATA_SOURCES: [torchvision_dataset]
+      LABEL_SOURCES: [torchvision_dataset]
       DATA_PATHS: []
       DATASET_NAMES: [CIFAR10]
       BATCHSIZE_PER_REPLICA: 256
@@ -43,10 +44,36 @@ config:
       COPY_TO_LOCAL_DISK: False
       COPY_DESTINATION_DIR: /tmp/cifar10/
       DROP_LAST: True
+    TEST:
+      DATA_SOURCES: [torchvision_dataset]
+      LABEL_SOURCES: [torchvision_dataset]
+      DATA_PATHS: []
+      DATASET_NAMES: [CIFAR10]
+      BATCHSIZE_PER_REPLICA: 256
+      LABEL_TYPE: sample_index 
+      TRANSFORMS:
+        - name: ImgReplicatePil
+          num_times: 2
+        - name: Resize
+          size: 36
+        - name: CenterCrop
+          size: 32
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+      COLLATE_FUNCTION: simclr_collator
+      MMAP_MODE: True
+      COPY_TO_LOCAL_DISK: False
+      COPY_DESTINATION_DIR: /tmp/cifar10/
+      DROP_LAST: True
+  METERS:
+    name: accuracy_list_meter
+    accuracy_list_meter:
+      num_meters: 1
+      topk_values: [1, 5]
   TRAINER:
     TRAIN_STEP_NAME: standard_train_step
-  METERS:
-    name: ""
   MODEL:
     TRUNK:
       NAME: resnet

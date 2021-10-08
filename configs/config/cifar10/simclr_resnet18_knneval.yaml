@@ -1,0 +1,95 @@
+# @package _global_
+config:
+  VERBOSE: True
+  LOG_FREQUENCY: 10
+  TEST_ONLY: False
+  TEST_MODEL: True
+  TEST_EVERY_NUM_EPOCH: 1
+  SEED_VALUE: 0
+  MULTI_PROCESSING_METHOD: forkserver
+  HOOKS:
+    PERF_STATS:
+      MONITOR_PERF_STATS: True
+      ROLLING_BTIME_FREQ: 313
+    TENSORBOARD_SETUP:
+      USE_TENSORBOARD: True
+  DATA:
+    NUM_DATALOADER_WORKERS: 5
+    TRAIN:
+      DATA_SOURCES: [torchvision_dataset]
+      LABEL_SOURCES: [torchvision_dataset]
+      DATASET_NAMES: [CIFAR10]
+      BATCHSIZE_PER_REPLICA: 256
+      TRANSFORMS:
+        - name: Resize
+          size: 36
+        - name: CenterCrop
+          size: 32
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+      MMAP_MODE: False
+      COPY_TO_LOCAL_DISK: False
+      COPY_DESTINATION_DIR: /tmp/cifar10/
+    TEST:
+      DATA_SOURCES: [torchvision_dataset]
+      LABEL_SOURCES: [torchvision_dataset]
+      DATASET_NAMES: [CIFAR10]
+      BATCHSIZE_PER_REPLICA: 256
+      TRANSFORMS:
+        - name: Resize
+          size: 36
+        - name: CenterCrop
+          size: 32
+        - name: ToTensor
+        - name: Normalize
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+      MMAP_MODE: False
+      COPY_TO_LOCAL_DISK: False
+      COPY_DESTINATION_DIR: /tmp/cifar10/
+  METERS:
+    name: accuracy_list_meter
+    accuracy_list_meter:
+      num_meters: 1
+      topk_values: [1, 5]
+  TRAINER:
+    TRAIN_STEP_NAME: standard_train_step
+  MODEL:
+    FEATURE_EVAL_SETTINGS:
+      EVAL_MODE_ON: True
+      FREEZE_TRUNK_AND_HEAD: True
+      EVAL_TRUNK_AND_HEAD: True
+    TRUNK:
+      NAME: resnet
+      RESNETS:
+        BLOCK: BasicBlock
+        FIRST_CONV_ORIG: False
+        FIRST_MAXPOOL_ORIG: False
+        DEPTH: 18
+        WIDTH_MULTIPLIER: 1
+    HEAD:
+      PARAMS: [
+        ["mlp", {"dims": [512, 512], "use_relu": True, "skip_last_layer_relu_bn": False}],
+        ["mlp", {"dims": [512, 128]}],
+      ]
+    WEIGHTS_INIT:
+      PARAMS_FILE: "./outputs/*.torch"
+      STATE_DICT_KEY_NAME: classy_state_dict
+  DISTRIBUTED:
+    BACKEND: nccl
+    NUM_NODES: 1
+    NUM_PROC_PER_NODE: 1
+    INIT_METHOD: tcp
+    RUN_ID: auto
+  MACHINE:
+    DEVICE: gpu
+  CHECKPOINT:
+    DIR: "./outputs"
+    AUTO_RESUME: False
+    CHECKPOINT_FREQUENCY: 1
+  NEAREST_NEIGHBOR:
+    SIGMA: 0.1
+    TOPK: 5
+    L2_NORM_FEATS: True
