@@ -9,15 +9,16 @@ config:
   HOOKS:
     PERF_STATS:
       MONITOR_PERF_STATS: True
-      PERF_STAT_FREQUENCY: 10
-      ROLLING_BTIME_FREQ: 5
+      PERF_STAT_FREQUENCY: 100
+      ROLLING_BTIME_FREQ: 313
     TENSORBOARD_SETUP:
       USE_TENSORBOARD: True
   DATA:
     NUM_DATALOADER_WORKERS: 5
     TRAIN:
       DATA_SOURCES: [torchvision_dataset]
-      DATASET_NAMES: [cifar10]
+      DATASET_NAMES: [CIFAR10]
+      DATA_PATHS: []
       BATCHSIZE_PER_REPLICA: 256
       LABEL_TYPE: sample_index    # just an implementation detail. Label isn't used
       TRANSFORMS:
@@ -61,7 +62,7 @@ config:
         ["mlp", {"dims": [512, 128]}],
       ]
     SYNC_BN_CONFIG:
-      CONVERT_BN_TO_SYNC_BN: True
+      CONVERT_BN_TO_SYNC_BN: False
       SYNC_BN_TYPE: apex
       GROUP_SIZE: 1
     AMP_PARAMS:
@@ -70,12 +71,12 @@ config:
   LOSS:
       name: simclr_info_nce_loss
       simclr_info_nce_loss:
-        temperature: 0.1
+        temperature: 0.5
         buffer_params:
           embedding_dim: 128
   OPTIMIZER:
-      name: sgd
-      use_larc: True
+      name: adam
+      use_larc: False
       larc_config:
         clip: False
         trust_coefficient: 0.001
@@ -98,16 +99,16 @@ config:
       param_schedulers:
         lr:
           auto_lr_scaling:
-            auto_scale: True
-            base_value: 0.3
+            auto_scale: False
+            base_value: 0.001
             base_lr_batch_size: 256
           name: composite
           schedulers:
             - name: linear
-              start_value: 0.6
-              end_value: 4.8
+              start_value: 0.0
+              end_value: 0.001
             - name: cosine
-              start_value: 4.8
+              start_value: 0.001
               end_value: 0.0000
           update_interval: step
           interval_scaling: [rescaled, fixed]
