@@ -32,6 +32,10 @@ BLOCK_CONFIG = {
     200: (3, 24, 36, 3),
 }
 
+BLOCK_TYPES = {
+    'BasicBlock': BasicBlock,
+    'Bottleneck': Bottleneck,
+}
 
 class SUPPORTED_DEPTHS(int, Enum):
     RN18 = 18
@@ -72,7 +76,7 @@ class ResNeXt(nn.Module):
         )
 
         self.trunk_config = self.model_config.TRUNK.RESNETS
-        self.block = self.trunk_config.BLOCK
+        self.block = BLOCK_TYPES[self.trunk_config.BLOCK]
         self.first_conv_orig = self.trunk_config.FIRST_CONV_ORIG
         self.first_maxpool_orig = self.trunk_config.FIRST_MAXPOOL_ORIG
         self.depth = SUPPORTED_DEPTHS(self.trunk_config.DEPTH)
