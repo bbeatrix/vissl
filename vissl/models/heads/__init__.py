@@ -63,6 +63,9 @@ import_all_modules(FILE_ROOT, "vissl.models.heads")
 
 from vissl.models.heads.linear_eval_mlp import LinearEvalMLP  # isort:skip # noqa
 from vissl.models.heads.mlp import MLP  # isort:skip # noqa
+from vissl.models.heads.paw_prototypes_head import (# isort:skip  # noqa
+    PawPrototypesHead
+)
 from vissl.models.heads.siamese_concat_view import (  # isort:skip  # noqa
     SiameseConcatView,
 )
@@ -70,10 +73,12 @@ from vissl.models.heads.swav_prototypes_head import (  # isort:skip  # noqa
     SwAVPrototypesHead,
 )
 
+
 __all__ = [
     "get_model_head",
     "LinearEvalMLP",
     "MLP",
+    "PawPrototypesHead",
     "SiameseConcatView",
     "SwAVPrototypesHead",
 ]

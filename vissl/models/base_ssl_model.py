@@ -163,6 +163,13 @@ class BaseSSLMultiInputOutputModel(ClassyModel):
                 f"Mismatch in #head: {len(heads)} and #features: {len(feats)}"
             )
 
+    def forward_to_last_head(self, batch):
+        """
+        Forward of the model to the embeddings before the last head, used to init paw prototypes.
+        Supports only single input now, TODO multi-input support.
+        """
+        return self.single_input_forward(batch, self._output_feature_names, self.heads[:-1])
+
     def forward(self, batch):
         """
         Main forward of the model. Depending on the model type the calls are patched
