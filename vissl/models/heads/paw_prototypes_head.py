@@ -12,6 +12,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from vissl.config import AttrDict
 from vissl.data import build_dataloader
+from vissl.models.heads import register_model_head
 
 
 def KMeans(x, K=10, n_iter=20, verbose=False):
