@@ -961,6 +961,7 @@ config:
         sharpening_temperature: 0.25
         label_smoothing (float): 0.1
         me_max: True
+        init_protos_with_embs_centroids: True
 
   # ----------------------------------------------------------------------------------- #
   # OPTIMIZER
