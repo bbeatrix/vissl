@@ -56,8 +56,7 @@ class PawProLoss(ClassyLoss):
         return cls(loss_config)
 
     def forward(self, output, target):
-        normalized_output = nn.functional.normalize(output, dim=1, p=2)
-        loss = self.criterion(normalized_output)
+        loss = self.criterion(output)
         return loss
 
     def __repr__(self):
@@ -116,10 +115,10 @@ class PawProCriterion(nn.Module):
 
         return labels
 
-    def forward(self, normalized_embeddings: torch.Tensor):
-        batch_size = len(normalized_embeddings) // self.num_views
+    def forward(self, embeddings: torch.Tensor):
+        batch_size = len(embeddings) // self.num_views
 
-        anchors = normalized_embeddings
+        anchors = embeddings
         p_views = torch.cat([anchors[batch_size:], anchors[:batch_size]], dim=0)
 
         # Step 1: compute anchor predictions
