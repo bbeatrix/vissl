@@ -134,6 +134,13 @@ class BaseSSLMultiInputOutputModel(ClassyModel):
             ]
         ):
             return feats
+        if (
+            self.model_config["FEATURE_EVAL_SETTINGS"]["EVAL_MODE_ON"]
+            and self.model_config["FEATURE_EVAL_SETTINGS"][
+                "EXTRACT_PENULTIM_FEATURES_ONLY"
+            ]
+        ):
+            return self.heads_forward(feats, heads[:-1])
         return self.heads_forward(feats, heads)
 
     def heads_forward(self, feats, heads):

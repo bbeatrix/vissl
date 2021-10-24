@@ -533,6 +533,8 @@ config:
       FREEZE_TRUNK_AND_HEAD: False
       # if you want to extract features of trunk only, set this to True
       EXTRACT_TRUNK_FEATURES_ONLY: False
+      # if you want to extract features of penultim layer in head, set this to True
+      EXTRACT_PENULTIM_FEATURES_ONLY: False
       # if we want to evaluate the full model, this requires loading the head weights as well
       # from model weights file. In this case, set the following to True.
       EVAL_TRUNK_AND_HEAD: False
