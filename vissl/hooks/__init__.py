@@ -37,7 +37,7 @@ from vissl.hooks.swav_momentum_hooks import (
     SwAVMomentumHook,
     SwAVMomentumNormalizePrototypesHook,
 )
-from vissl.hooks.pawpro_hooks import InitPawPrototypesHook
+from vissl.hooks.pawpro_hooks import InitPawPrototypesHook, ReinitPawPrototypesHook
 from vissl.hooks.tensorboard_hook import SSLTensorboardHook  # noqa
 from vissl.utils.checkpoint import get_checkpoint_folder
 from vissl.utils.tensorboard import get_tensorboard_hook, is_tensorboard_available
@@ -99,7 +99,7 @@ def default_hook_generator(cfg: AttrDict) -> List[ClassyHook]:
             ]
         )
     if cfg.LOSS.name == "pawpro_loss" and cfg.LOSS["pawpro_loss"].init_protos_with_embs_centroids:
-        hooks.append(InitPawPrototypesHook())
+        hooks.extend([InitPawPrototypesHook(), ReinitPawPrototypesHook()])
     if cfg.LOSS.name == "dino_loss":
         hooks.append(DINOHook())
     if cfg.LOSS.name == "deepclusterv2_loss":
