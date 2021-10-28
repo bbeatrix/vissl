@@ -129,7 +129,10 @@ class PawPrototypesHead(nn.Module):
         for itr, batch in enumerate(data_iterator):
             img_batch = batch['data'][0]
             with torch.no_grad():
-                z = task.model.module.forward_to_last_head(img_batch)[0]
+                try:
+                    z = task.model.forward_to_last_head(img_batch)[0]
+                except AttributeError:
+                    z = task.model.module.forward_to_last_head(img_batch)[0]
                 zs.append(z.cpu())
                 z_num += len(z)
         embeddings = torch.cat(zs)

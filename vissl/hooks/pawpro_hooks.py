@@ -40,19 +40,18 @@ class InitPawPrototypesHook(ClassyHook):
         with torch.no_grad():
             try:
                 # This is either single GPU model or a FSDP.
-                for j in range(task.model.heads[-1].num_heads):
-                    module = getattr(task.model.heads[-1], "prototypes" + str(j))
-                    # Determine the context we need to use. For FSDP, we
-                    # need the summon_full_params context, which ensures that
-                    # full weights for this layer is all_gathered and after
-                    # normalization, the changes are persisted in the local
-                    # shards. All ranks do the same normalization, so all
-                    # changes should be saved.
-                    ctx = contextlib.suppress()
-                    if hasattr(module, "summon_full_params"):
-                        ctx = module.summon_full_params()
-                    with ctx:
-                        task.model.heads[-1].init_with_embs_centroids(task)
+                module = getattr(task.model.heads[-1], "prototypes")
+                # Determine the context we need to use. For FSDP, we
+                # need the summon_full_params context, which ensures that
+                # full weights for this layer is all_gathered and after
+                # normalization, the changes are persisted in the local
+                # shards. All ranks do the same normalization, so all
+                # changes should be saved.
+                ctx = contextlib.suppress()
+                if hasattr(module, "summon_full_params"):
+                    ctx = module.summon_full_params()
+                with ctx:
+                    task.model.heads[-1].init_with_embs_centroids(task)
             except AttributeError:
                 # This is a DDP wrapped one.
                 task.model.module.heads[-1].init_with_embs_centroids(task)
@@ -90,19 +89,18 @@ class ReinitPawPrototypesHook(ClassyHook):
         with torch.no_grad():
             try:
                 # This is either single GPU model or a FSDP.
-                for j in range(task.model.heads[-1].num_heads):
-                    module = getattr(task.model.heads[-1], "prototypes" + str(j))
-                    # Determine the context we need to use. For FSDP, we
-                    # need the summon_full_params context, which ensures that
-                    # full weights for this layer is all_gathered and after
-                    # normalization, the changes are persisted in the local
-                    # shards. All ranks do the same normalization, so all
-                    # changes should be saved.
-                    ctx = contextlib.suppress()
-                    if hasattr(module, "summon_full_params"):
-                        ctx = module.summon_full_params()
-                    with ctx:
-                        task.model.heads[-1].init_with_embs_centroids(task)
+                module = getattr(task.model.heads[-1], "prototypes")
+                # Determine the context we need to use. For FSDP, we
+                # need the summon_full_params context, which ensures that
+                # full weights for this layer is all_gathered and after
+                # normalization, the changes are persisted in the local
+                # shards. All ranks do the same normalization, so all
+                # changes should be saved.
+                ctx = contextlib.suppress()
+                if hasattr(module, "summon_full_params"):
+                    ctx = module.summon_full_params()
+                with ctx:
+                    task.model.heads[-1].init_with_embs_centroids(task)
             except AttributeError:
                 # This is a DDP wrapped one.
                 task.model.module.heads[-1].init_with_embs_centroids(task)
