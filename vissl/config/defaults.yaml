@@ -978,6 +978,7 @@ config:
       clip: False
       eps: 1e-08
       trust_coefficient: 0.001
+      exclude_unregularized_params: False
     weight_decay: 0.0001
     momentum: 0.9
     nesterov: False

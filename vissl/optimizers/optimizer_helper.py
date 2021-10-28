@@ -340,4 +340,10 @@ def get_optimizer_param_groups(
             }
         )
 
+    if optimizer_config['larc_config']['exclude_unregularized_params']:
+        logging.info(f"Setting larc exclusion for unregularized param groups...")
+        for idx in range(len(param_groups)):
+            if idx % 2 == 1:
+                param_groups[idx]['larc_exclude'] = True
+
     return param_groups
