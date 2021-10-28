@@ -59,8 +59,11 @@ config:
   MODEL:
     FEATURE_EVAL_SETTINGS:
       EVAL_MODE_ON: True
+      FREEZE_TRUNK_ONLY: False
       FREEZE_TRUNK_AND_HEAD: True
-      EVAL_TRUNK_AND_HEAD: True
+      EVAL_TRUNK_AND_HEAD: False
+      EXTRACT_TRUNK_FEATURES_ONLY: True
+      EXTRACT_PENULTIM_FEATURES_ONLY: False
     TRUNK:
       NAME: resnet
       RESNETS:
@@ -71,8 +74,10 @@ config:
         WIDTH_MULTIPLIER: 1
     HEAD:
       PARAMS: [
-        ["mlp", {"dims": [512, 512], "use_relu": True, "skip_last_layer_relu_bn": False}],
-        ["mlp", {"dims": [512, 128]}],
+        ["mlp", {"dims": [512, 128], "use_relu": True, "use_bn": True, "skip_last_layer_relu_bn": False}],
+        ["mlp", {"dims": [128, 128], "use_relu": True, "use_bn": True, "skip_last_layer_relu_bn": False}],
+        ["mlp", {"dims": [128, 128], "skip_last_layer_relu_bn": True}],
+        ["mlp", {"dims": [128, 64]}],
       ]
     WEIGHTS_INIT:
       PARAMS_FILE: "./outputs/*.torch"
@@ -90,6 +95,7 @@ config:
     AUTO_RESUME: False
     CHECKPOINT_FREQUENCY: 1
   NEAREST_NEIGHBOR:
-    SIGMA: 0.1
+    SIGMA: 1.0
     TOPK: 5
     L2_NORM_FEATS: True
+    SIM_TYPE: cosine
