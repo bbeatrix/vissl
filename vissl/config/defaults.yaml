@@ -1343,3 +1343,4 @@ config:
     TOPK: 200
     # if the features should be l2 normalized, set this to True
     L2_NORM_FEATS: False
+    SIM_TYPE: cosine

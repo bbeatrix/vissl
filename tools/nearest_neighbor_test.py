@@ -28,6 +28,8 @@ from vissl.utils.misc import merge_features
 def nearest_neighbor_test(cfg: AttrDict, layer_name: str = "heads"):
     temperature = cfg.NEAREST_NEIGHBOR.SIGMA
     num_neighbors = cfg.NEAREST_NEIGHBOR.TOPK
+    sim_type = cfg.NEAREST_NEIGHBOR.SIM_TYPE
+    assert sim_type in ['l2dist', 'cosine'], "Similarity type not supported"
     output_dir = get_checkpoint_folder(cfg)
     logging.info(f"Testing with sigma: {temperature}, topk neighbors: {num_neighbors}")
 
@@ -65,7 +67,11 @@ def nearest_neighbor_test(cfg: AttrDict, layer_name: str = "heads"):
                 features = nn.functional.normalize(features, dim=1, p=2)
 
             # calculate the dot product and compute top-k neighbors
-            similarity = torch.mm(features, train_features)
+            if sim_type == "cosine":
+                similarity = torch.mm(features, train_features)
+            elif sim_type == "l2dist":
+                similarity = - torch.cdist(features, train_features.T, p=2)
+
             distances, indices = similarity.topk(
                 num_neighbors, largest=True, sorted=True
             )
