@@ -119,7 +119,7 @@ class PawProCriterion(nn.Module):
         batch_size = len(embeddings) // self.num_views
 
         anchors = embeddings
-        p_views = torch.cat([anchors[batch_size:], anchors[:batch_size]], dim=0)
+        p_views = torch.cat([anchors[batch_size:], anchors[:batch_size]], dim=0).detach()
 
         # Step 1: compute anchor predictions
         probs = self.softmax(anchors / self.temperature) @ self.labels
