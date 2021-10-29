@@ -95,7 +95,7 @@ config:
     AUTO_RESUME: False
     CHECKPOINT_FREQUENCY: 1
   NEAREST_NEIGHBOR:
-    SIGMA: 1.0
+    SIGMA: 0.1
     TOPK: 5
     L2_NORM_FEATS: True
     SIM_TYPE: cosine
