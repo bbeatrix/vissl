@@ -96,6 +96,13 @@ def Solarize(img, v):
     return PIL.ImageOps.solarize(img, v)
 
 
+def Equalize(img):
+    """
+    Applies PIL.ImageOps.equalize to the image
+    """
+    return PIL.ImageOps.equalize(img)
+
+
 def Posterize(img, v):
     """
     Applies PIL.ImageOps.posterize to the image
@@ -172,3 +179,15 @@ class AutoContrastTransform(TransformObject):
 
     def __call__(self, img):
         return self.root_transform(img, 0)
+
+
+class EqualizeTransform(TransformObject):
+    """
+    Wraps the Equalize method
+    """
+
+    def __init__(self):
+        self.root_transform = Equalize
+
+    def __call__(self, img):
+        return self.root_transform(img)
