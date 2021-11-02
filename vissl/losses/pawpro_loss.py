@@ -24,6 +24,7 @@ class PawProLoss(ClassyLoss):
         sharpening_temperature (float): the temperature used for sharpening
         label_smoothing (float): value of label smoothing 
         me_max (bool): whether to use the me-max regularization
+        num_crops (int): number of small crops to use
     """
 
     def __init__(self, loss_config: AttrDict):
@@ -35,12 +36,14 @@ class PawProLoss(ClassyLoss):
         self.sharpening_temperature = self.loss_config.sharpening_temperature
         self.label_smoothing = self.loss_config.label_smoothing
         self.me_max = self.loss_config.me_max
+        self.num_crops = self.loss_config.num_crops
         self.criterion = PawProCriterion(self.world_size,
                                          self.num_protos,
                                          self.temperature,
                                          self.sharpening_temperature,
                                          self.label_smoothing, 
-                                         self.me_max)
+                                         self.me_max,
+                                         self.num_crops)
 
     @classmethod
     def from_config(cls, loss_config: AttrDict):
@@ -65,7 +68,8 @@ class PawProLoss(ClassyLoss):
                      "temperature": self.temperature,
                      "sharpening_temperature": self.sharpening_temperature,
                      "label_smoothing": self.label_smoothing, 
-                     "me_max": self.me_max}
+                     "me_max": self.me_max,
+                     "nnum_crops": self.num_crops}
         return pprint.pformat(repr_dict, indent=2)
 
 
@@ -81,10 +85,11 @@ class PawProCriterion(nn.Module):
         sharpening_temperature (float): the temperature used for sharpening
         label_smoothing (float): value of label smoothing 
         me_max (bool): whether to use the me-max regularization
+        num_crops (int): number of small crops to use
     """
 
     def __init__(self, world_size: int, num_protos: int, temperature: float,  
-                 sharpening_temperature: float, label_smoothing: float, me_max: bool):
+                 sharpening_temperature: float, label_smoothing: float, me_max: bool, num_crops: int):
         super(PawProCriterion, self).__init__()
 
         self.world_size = world_size
@@ -93,6 +98,7 @@ class PawProCriterion(nn.Module):
         self.sharpening_temperature = sharpening_temperature
         self.label_smoothing = label_smoothing
         self.me_max = me_max
+        self.num_crops = num_crops
 
         self.num_views = 2
         self.softmax = nn.Softmax(dim=1)
@@ -116,10 +122,12 @@ class PawProCriterion(nn.Module):
         return labels
 
     def forward(self, embeddings: torch.Tensor):
-        batch_size = len(embeddings) // self.num_views
+        batch_size = len(embeddings) // (self.num_views + self.num_crops)
 
         anchors = embeddings
-        p_views = torch.cat([anchors[batch_size:], anchors[:batch_size]], dim=0).detach()
+        images_p_views = [anchors[k*batch_size:(k+1)*batch_size] for k in range(self.num_views)][::-1]
+        crops_p_views = torch.mean(torch.stack(images_p_views), dim=0)
+        p_views = torch.cat([*images_p_views, *[crops_p_views for _ in range(self.num_crops)]], dim=0).detach()
 
         # Step 1: compute anchor predictions
         probs = self.softmax(anchors / self.temperature) @ self.labels
@@ -153,6 +161,7 @@ class PawProCriterion(nn.Module):
             "sharpening_temperature": self.sharpening_temperature,
             "label_smoothing": self.label_smoothing,
             "me_max": self.me_max,
-            "num_views": self.num_views
+            "num_views": self.num_views,
+            "num_crops": self.num_crops
         }
         return pprint.pformat(repr_dict, indent=2)

@@ -963,6 +963,7 @@ config:
         sharpening_temperature: 0.25
         label_smoothing (float): 0.1
         me_max: True
+        num_crops: 0
         init_protos_with_embs_centroids: True
         reinit_protos_phase_interval: 0
 
