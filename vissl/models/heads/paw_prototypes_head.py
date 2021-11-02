@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 from vissl.config import AttrDict
-from vissl.data import build_dataloader
+from vissl.data import build_dataloader, build_dataset
 from vissl.models.heads import register_model_head
 
 
@@ -103,31 +103,19 @@ class PawPrototypesHead(nn.Module):
 
     def init_with_embs_centroids(self, task):
         logging.info("Init Paw Prototypes head...")
-        phase_type = "train" if task.train else "test"
-        dataloader = build_dataloader(
-            dataset=task.datasets[phase_type],
-            dataset_config=task.config.DATA[phase_type.upper()],
-            num_dataloader_workers=task.config.DATA.NUM_DATALOADER_WORKERS,
-            pin_memory=task.config.DATA.PIN_MEMORY,
-            multi_processing_method=task.config.MULTI_PROCESSING_METHOD,
-            device=task.device,
-            sampler_seed=task.config["SEED_VALUE"],
-            split=phase_type,
-        )
+        if not task.train:
+            logging.info("Paw Prototypes head can be initialized only during training phases, skipping it now")
+            return
 
-        data_iterator = iter(dataloader)
+        init_dataloader = self._create_init_dataloader(task)
+        init_data_iterator = iter(init_dataloader)
 
-        with torch.no_grad():
-            try: 
-                heads = task.model.heads[:-1]
-                trunk = task.model.trunk
-            except AttributeError:
-                heads = task.model.module.heads[:-1]
-                trunk = task.model.module.trunk
         zs = []
         z_num = 0
-        for itr, batch in enumerate(data_iterator):
+        for itr, batch in enumerate(init_data_iterator):
+            assert len(batch['data']) == 1, "Init batch data list should contain only a single tensor"
             img_batch = batch['data'][0]
+
             with torch.no_grad():
                 try:
                     z = task.model.forward_to_last_head(img_batch)[0]
@@ -142,7 +130,37 @@ class PawPrototypesHead(nn.Module):
             cl, means = KMeans(embeddings, self.num_protos, n_iter=10, verbose=True)
             getattr(self, "prototypes").weight.data.copy_(means)
         logging.info("Init finished successfully!")
-        
+
+    def _create_init_dataloader(self, task):
+        phase_type = "TRAIN"
+
+        task_device = task.device
+        task_config = task.config
+        data_config = {'DATA': task_config['DATA']}
+        data_config['DATA']['TRAIN']["TRANSFORMS"] = [
+            {'name': 'Resize', 'size': 36},
+            {'name': 'CenterCrop', 'size': 32},
+            {'name': 'RandomHorizontalFlip', 'p': 0.5},
+            {'name': 'ToTensor'},
+            {'name': 'Normalize', 'mean': [0.4914, 0.4822, 0.4465], 'std': [0.2023, 0.1994, 0.201]}
+        ]
+        data_config['DATA']['TRAIN']['COLLATE_FUNCTION'] = 'default_collate'
+        data_config['DATA']['TRAIN']['COLLATE_FUNCTION_PARAMS'] = {}
+
+        init_dataset = build_dataset(data_config, phase_type)
+
+        init_dataloader = build_dataloader(
+            dataset=init_dataset,
+            dataset_config=data_config['DATA'][phase_type],
+            num_dataloader_workers=task_config.DATA.NUM_DATALOADER_WORKERS,
+            pin_memory=task_config.DATA.PIN_MEMORY,
+            multi_processing_method=task_config.MULTI_PROCESSING_METHOD,
+            device=task_device,
+            sampler_seed=task_config["SEED_VALUE"],
+            split=phase_type.lower(),
+        )
+        return init_dataloader
+
     def forward(self, batch: torch.Tensor):
         """
         Args:
