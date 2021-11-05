@@ -98,7 +98,7 @@ def default_hook_generator(cfg: AttrDict) -> List[ClassyHook]:
                 SwAVMomentumNormalizePrototypesHook(),
             ]
         )
-    if cfg.LOSS.name == "pawpro_loss" and cfg.LOSS["pawpro_loss"].init_protos_with_embs_centroids:
+    if cfg.LOSS.name in ["pawpro_loss", "simclr_info_nce_loss"] and cfg.LOSS[cfg.LOSS["name"]].init_protos_with_embs_centroids:
         hooks.extend([InitPawPrototypesHook(), ReinitPawPrototypesHook()])
     if cfg.LOSS.name == "dino_loss":
         hooks.append(DINOHook())

@@ -30,9 +30,9 @@ class InitPawPrototypesHook(ClassyHook):
         """
         Initialize prototypes as embedding cluster centroids.
         """
-        if not task.config["LOSS"]["name"] == "pawpro_loss":
+        if not (task.config["LOSS"]["name"] in ["pawpro_loss", "simclr_info_nce_loss"]):
             return
-        if not task.config.LOSS["pawpro_loss"].init_protos_with_embs_centroids:
+        if not task.config.LOSS[task.config["LOSS"]["name"]].init_protos_with_embs_centroids:
             return
         if not task.train:
             return
@@ -75,13 +75,13 @@ class ReinitPawPrototypesHook(ClassyHook):
         """
         Reinitialize prototypes as embedding cluster centroids.
         """
-        if not task.config["LOSS"]["name"] == "pawpro_loss":
+        if not (task.config["LOSS"]["name"] in ["pawpro_loss", "simclr_info_nce_loss"]):
             return
-        if task.config.LOSS["pawpro_loss"].reinit_protos_phase_interval <= 0:
+        if task.config.LOSS[task.config["LOSS"]["name"]].reinit_protos_phase_interval <= 0:
             return
         if not task.train or task.train_phase_idx == 0:
             return
-        if task.train_phase_idx % task.config.LOSS["pawpro_loss"].reinit_protos_phase_interval != 0:
+        if task.train_phase_idx % task.config.LOSS[task.config["LOSS"]["name"]].reinit_protos_phase_interval != 0:
             return
 
         logging.info(f'Current train phase is: {task.train_phase_idx}, reinitializing Paw Prototypes head...')
