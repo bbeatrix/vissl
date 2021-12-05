@@ -4,8 +4,8 @@
         "val": ["airstore://flashblade_imagenet_val", "<unused>"]
     },
     "imagenet1k_folder": {
-        "train": ["<img_path>", "<lbl_path>"],
-        "val": ["<img_path>", "<lbl_path>"]
+        "train": ["/data/shared/data/imagenet/train/", "<lbl_path>"],
+        "val": ["/data/shared/data/imagenet/val/", "<lbl_path>"]
     },
     "imagenet_a_filelist": {
         "train": ["<not_used>", "<not_used>"],
