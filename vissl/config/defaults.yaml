@@ -1204,6 +1204,8 @@ config:
     #   CHECKPOINT_ITER_FREQUENCY = 100 -> checkpoint after every 100 iterations
     #   CHECKPOINT_ITER_FREQUENCY = -1 -> don't checkpoint after iterations.
     CHECKPOINT_ITER_FREQUENCY: -1
+    # if we  want to checkpoint only certain phases provided here as list - even at various iterations
+    CHECKPOINT_AT_PHASE: []
     # if we want to restart a training even if it has already succeeded on this machine
     OVERWRITE_EXISTING: False
     # we can specify what "latest" checkpoint to use to resume training. This is only valid

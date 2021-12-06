@@ -474,6 +474,7 @@ def is_checkpoint_phase(
     train_phase_idx: int,
     num_train_phases: int,
     mode: str,
+    checkpoint_at_phase,
 ):
     """
     Determines if a checkpoint should be saved on current epoch. If epoch=1, then
@@ -487,17 +488,24 @@ def is_checkpoint_phase(
                         checkpoint at.
         mode_frequency (int): checkpoint frequency - every N iterations or every N epochs/phase
         train_phase_idx (int): the current training phase we are in. Starts from 0
-        num_train_phases (int): total number of training phases. Usually the same as num_epochs.
+        num_train_phases (int): total number of training phases. Usually the same as num_epochs
+        checkpoint_at_phase (list): list of phases where checkpointing is needed, empty by default.
 
     Returns:
         checkpointing_phase (bool): whether the model should be checkpointed or not
     """
+
     if mode == "iteration":
-        checkpointing_phase = (mode_num % mode_frequency) == 0
+        if (checkpoint_at_phase and train_phase_idx not in checkpoint_at_phase):
+            checkpointing_phase = False
+        else:
+            checkpointing_phase = (mode_num % mode_frequency) == 0
     elif mode == "phase":
-        checkpointing_phase = (mode_num % mode_frequency) == 0 or train_phase_idx == (
-            num_train_phases - 1
-        )
+        if (mode_num % mode_frequency) == 0 or train_phase_idx == (num_train_phases - 1) or \
+            (checkpoint_at_phase and train_phase_idx in checkpoint_at_phase):
+            checkpointing_phase = True
+        else:
+            checkpointing_phase = False
     return checkpointing_phase
 
 

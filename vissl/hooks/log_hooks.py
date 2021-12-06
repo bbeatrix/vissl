@@ -396,10 +396,11 @@ class LogLossMetricsCheckpointHook(ClassyHook):
         # num_train_phases = num_epochs * num_phases_per_epoch
         # For OSS use, num_train_phases will be equal to num_epochs
         num_train_phases = task.num_train_phases
+        checkpoint_at_phase = task.config["CHECKPOINT"]["CHECKPOINT_AT_PHASE"]
 
         # check if we need to checkpoint this phase
         is_checkpointing_phase = is_checkpoint_phase(
-            mode_num, mode_frequency, train_phase_idx, num_train_phases, mode
+            mode_num, mode_frequency, train_phase_idx, num_train_phases, mode, checkpoint_at_phase
         )
         is_final_train_phase = (
             (train_phase_idx == (num_train_phases - 1))
