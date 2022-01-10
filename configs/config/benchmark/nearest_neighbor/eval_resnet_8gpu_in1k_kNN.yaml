@@ -6,7 +6,7 @@ config:
       DATA_SOURCES: [disk_folder]
       LABEL_SOURCES: [disk_folder]
       DATASET_NAMES: [imagenet1k_folder]
-      BATCHSIZE_PER_REPLICA: 32
+      BATCHSIZE_PER_REPLICA: 512
       TRANSFORMS:
         - name: Resize
           size: 256
@@ -23,7 +23,7 @@ config:
       DATA_SOURCES: [disk_folder]
       LABEL_SOURCES: [disk_folder]
       DATASET_NAMES: [imagenet1k_folder]
-      BATCHSIZE_PER_REPLICA: 32
+      BATCHSIZE_PER_REPLICA: 512
       TRANSFORMS:
         - name: Resize
           size: 256
@@ -40,7 +40,9 @@ config:
     FEATURE_EVAL_SETTINGS:
       EVAL_MODE_ON: True
       FREEZE_TRUNK_AND_HEAD: True
-      EVAL_TRUNK_AND_HEAD: True
+      EVAL_TRUNK_AND_HEAD: False
+      EXTRACT_TRUNK_FEATURES_ONLY: True
+      SHOULD_FLATTEN_FEATS: True
     TRUNK:
       NAME: resnet
       RESNETS:
@@ -62,5 +64,5 @@ config:
     DIR: .
   NEAREST_NEIGHBOR:
     SIGMA: 0.1
-    TOPK: 200
-    L2_NORM_FEATS: False
+    TOPK: 20
+    L2_NORM_FEATS: True
