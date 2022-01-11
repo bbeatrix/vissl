@@ -43,6 +43,9 @@ config:
       EVAL_TRUNK_AND_HEAD: False
       EXTRACT_TRUNK_FEATURES_ONLY: True
       SHOULD_FLATTEN_FEATS: True
+      LINEAR_EVAL_FEAT_POOL_OPS_MAP: [
+        ["res5", ["AdaptiveAvgPool2d", [[1, 1]]]],
+      ]
     TRUNK:
       NAME: resnet
       RESNETS:
