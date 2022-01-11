@@ -131,6 +131,9 @@ class ResNeXt(nn.Module):
             Bottleneck, dim_inner * 8, n4, stride=safe_stride
         )
 
+        model_layer4[2].relu = nn.Identity()
+        model_layer4_relu = model.relu
+
         # we mapped the layers of resnet model into feature blocks to facilitate
         # feature extraction at various layers of the model. The layers for which
         # to extract features is controlled by requested_feat_keys argument in the
@@ -145,6 +148,7 @@ class ResNeXt(nn.Module):
                 ("layer2", model_layer2),
                 ("layer3", model_layer3),
                 ("layer4", model_layer4),
+                ("layer4_relu", model_layer4_relu),
                 ("avgpool", model_avgpool),
                 ("flatten", Flatten(1)),
             ]
@@ -159,6 +163,7 @@ class ResNeXt(nn.Module):
             "res3": "layer2",
             "res4": "layer3",
             "res5": "layer4",
+            "res5relu": "layer4_relu",
             "res5avg": "avgpool",
             "flatten": "flatten",
         }
