@@ -98,7 +98,8 @@ class ResNeXt(nn.Module):
             self.model_config.ACTIVATION_CHECKPOINTING.NUM_ACTIVATION_CHECKPOINTING_SPLITS
         )
 
-        self.use_sign_layer = self.model_config.FEATURE_EVAL_SETTINGS.USE_SIGN_LAYER
+        self.use_sign_layer = self.model_config.TRUNK.RESNETS.USE_SIGN_LAYER
+        self.separate_last_relu = self.model_config.TRUNK.RESNETS.SEPARATE_LAST_RELU
         
         (n1, n2, n3, n4) = BLOCK_CONFIG[self.depth]
         logging.info(
@@ -148,8 +149,6 @@ class ResNeXt(nn.Module):
             Bottleneck, dim_inner * 8, n4, stride=safe_stride
         )
 
-        model_layer4[2].relu = nn.Identity()
-        model_layer4_relu = model.relu
 
         # we mapped the layers of resnet model into feature blocks to facilitate
         # feature extraction at various layers of the model. The layers for which
@@ -164,7 +163,6 @@ class ResNeXt(nn.Module):
             ("layer2", model_layer2),
             ("layer3", model_layer3),
             ("layer4", model_layer4),
-            ("layer4_relu", model_layer4_relu),
             ("avgpool", model_avgpool),
             ("flatten", Flatten(1)),
         ]
@@ -178,13 +176,18 @@ class ResNeXt(nn.Module):
             "res3": "layer2",
             "res4": "layer3",
             "res5": "layer4",
-            "res5relu": "layer4_relu",
             "res5avg": "avgpool",
             "flatten": "flatten",
         }
 
+        if self.separate_last_relu:
+            model_layer4[2].relu = nn.Identity()
+            model_layer4_relu = model.relu
+            feature_block_list.append(("layer4_relu", model_layer4_relu),)
+            self.feat_eval_mapping["res5relu"] = "layer4_relu"
+
         if self.use_sign_layer:
-            self.sign_param_value = self.model_config.FEATURE_EVAL_SETTINGS.SIGN_PARAM_VALUE
+            self.sign_param_value = self.model_config.TRUNK.RESNETS.SIGN_PARAM_VALUE
             model_sign_layer = SignLayer(self.sign_param_value)
             feature_block_list.append(("sign", model_sign_layer),)
             self.feat_eval_mapping["sign"] = "sign"

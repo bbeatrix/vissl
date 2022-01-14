@@ -43,12 +43,13 @@ config:
       EVAL_TRUNK_AND_HEAD: False
       EXTRACT_TRUNK_FEATURES_ONLY: True
       SHOULD_FLATTEN_FEATS: True
-      USE_SIGN_LAYER: False
-      SIGN_PARAM_VALUE: 1.0
     TRUNK:
       NAME: resnet
       RESNETS:
         DEPTH: 50
+        SEPARATE_LAST_RELU: False
+        USE_SIGN_LAYER: False
+        SIGN_PARAM_VALUE: 1.0
     HEAD:
       PARAMS: [
         ["mlp", {"dims": [2048, 2048], "use_relu": True, "skip_last_layer_relu_bn": False}],
