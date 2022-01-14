@@ -580,6 +580,10 @@ config:
       EVAL_TRUNK_AND_HEAD: False
       # whether features should be flattened to result in N x D feature shape
       SHOULD_FLATTEN_FEATS: True
+      # whether a sign function with slope should be applied  on the trunk outputs
+      USE_SIGN_LAYER: False
+      # parameter value of sign function with slope
+      SIGN_PARAM_VALUE: 1.0
       # model features that should be evaluated for linear classification and what
       # pooling to apply on features. Could be any pooling operation or Identity.
       #

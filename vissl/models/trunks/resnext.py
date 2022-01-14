@@ -50,6 +50,21 @@ class SUPPORTED_L4_STRIDE(int, Enum):
     two = 2
 
 
+
+class SignLayer(nn.Module):
+    def __init__(self, param):
+        super(SignLayer, self).__init__()
+        self.param = param
+
+    def sign_with_param(self, x):
+        zeros = torch.zeros_like(x)
+        ones = torch.ones_like(x)
+        return torch.max(zeros, torch.min(ones, x / self.param))
+
+    def forward(self, input_tensor):
+        return self.sign_with_param(input_tensor)
+
+
 @register_model_trunk("resnet")
 class ResNeXt(nn.Module):
     """
@@ -83,6 +98,8 @@ class ResNeXt(nn.Module):
             self.model_config.ACTIVATION_CHECKPOINTING.NUM_ACTIVATION_CHECKPOINTING_SPLITS
         )
 
+        self.use_sign_layer = self.model_config.FEATURE_EVAL_SETTINGS.USE_SIGN_LAYER
+        
         (n1, n2, n3, n4) = BLOCK_CONFIG[self.depth]
         logging.info(
             f"Building model: ResNeXt"
@@ -138,21 +155,19 @@ class ResNeXt(nn.Module):
         # feature extraction at various layers of the model. The layers for which
         # to extract features is controlled by requested_feat_keys argument in the
         # forward() call.
-        self._feature_blocks = nn.ModuleDict(
-            [
-                ("conv1", model_conv1),
-                ("bn1", model_bn1),
-                ("conv1_relu", model_relu1),
-                ("maxpool", model_maxpool),
-                ("layer1", model_layer1),
-                ("layer2", model_layer2),
-                ("layer3", model_layer3),
-                ("layer4", model_layer4),
-                ("layer4_relu", model_layer4_relu),
-                ("avgpool", model_avgpool),
-                ("flatten", Flatten(1)),
-            ]
-        )
+        feature_block_list = [
+            ("conv1", model_conv1),
+            ("bn1", model_bn1),
+            ("conv1_relu", model_relu1),
+            ("maxpool", model_maxpool),
+            ("layer1", model_layer1),
+            ("layer2", model_layer2),
+            ("layer3", model_layer3),
+            ("layer4", model_layer4),
+            ("layer4_relu", model_layer4_relu),
+            ("avgpool", model_avgpool),
+            ("flatten", Flatten(1)),
+        ]
 
         # give a name mapping to the layers so we can use a common terminology
         # across models for feature evaluation purposes.
@@ -167,6 +182,15 @@ class ResNeXt(nn.Module):
             "res5avg": "avgpool",
             "flatten": "flatten",
         }
+
+        if self.use_sign_layer:
+            self.sign_param_value = self.model_config.FEATURE_EVAL_SETTINGS.SIGN_PARAM_VALUE
+            model_sign_layer = SignLayer(self.sign_param_value)
+            feature_block_list.append(("sign", model_sign_layer),)
+            self.feat_eval_mapping["sign"] = "sign"
+
+        self._feature_blocks = nn.ModuleDict(feature_block_list)
+
 
     def forward(
         self, x: torch.Tensor, out_feat_keys: List[str] = None
