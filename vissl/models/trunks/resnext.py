@@ -55,8 +55,11 @@ class SignLayer(nn.Module):
     def __init__(self, param):
         super(SignLayer, self).__init__()
         self.param = param
+        print(f"\nSign alfa value: {self.param}\n")
 
     def sign_with_param(self, x):
+        if self.param == 0.0:
+            return torch.sign(x)
         zeros = torch.zeros_like(x)
         ones = torch.ones_like(x)
         return torch.max(zeros, torch.min(ones, x / self.param))
