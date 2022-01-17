@@ -625,7 +625,7 @@ config:
         # use this so we set the default as 2.
         LAYER4_STRIDE: 2
         # whether to separate the last relu in trunk
-        SEPARATE_LAST_RELU: False
+        REMOVE_LAST_RELU: False
         # whether a sign function with slope should be applied  on the trunk outputs
         USE_SIGN_LAYER: False
         # parameter value of sign function with slope

@@ -99,7 +99,7 @@ class ResNeXt(nn.Module):
         )
 
         self.use_sign_layer = self.model_config.TRUNK.RESNETS.USE_SIGN_LAYER
-        self.separate_last_relu = self.model_config.TRUNK.RESNETS.SEPARATE_LAST_RELU
+        self.remove_last_relu = self.model_config.TRUNK.RESNETS.REMOVE_LAST_RELU
         
         (n1, n2, n3, n4) = BLOCK_CONFIG[self.depth]
         logging.info(
@@ -180,11 +180,8 @@ class ResNeXt(nn.Module):
             "flatten": "flatten",
         }
 
-        if self.separate_last_relu:
+        if self.remove_last_relu:
             model_layer4[2].relu = nn.Identity()
-            model_layer4_relu = model.relu
-            feature_block_list.append(("layer4_relu", model_layer4_relu),)
-            self.feat_eval_mapping["res5relu"] = "layer4_relu"
 
         if self.use_sign_layer:
             self.sign_param_value = self.model_config.TRUNK.RESNETS.SIGN_PARAM_VALUE

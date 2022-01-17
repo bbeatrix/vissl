@@ -47,7 +47,7 @@ config:
       NAME: resnet
       RESNETS:
         DEPTH: 50
-        SEPARATE_LAST_RELU: False
+        REMOVE_LAST_RELU: False
         USE_SIGN_LAYER: False
         SIGN_PARAM_VALUE: 1.0
     HEAD:
