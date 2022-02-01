@@ -72,7 +72,7 @@ config:
         SIGN_PARAM_VALUE: 1.0
     HEAD:
       PARAMS: [
-        ["shifted_relus_weighted_sum_wmlp", {"shifts_linspace": [0, 10, 10], "in_channels": 2048, "dims": [2048, 1000]}],
+        ["shifted_relus_weighted_sum_wmlp", {"shifts_linspace": [0, 2, 10], "in_channels": 2048, "dims": [2048, 1000]}],
       ]
     WEIGHTS_INIT:
       PARAMS_FILE: ""
