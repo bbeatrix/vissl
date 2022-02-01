@@ -50,6 +50,9 @@ config:
         REMOVE_LAST_RELU: False
         USE_SIGN_LAYER: False
         SIGN_PARAM_VALUE: 1.0
+        USE_MONFUNC_LAYER: False
+        MONFUNC_CLASS: "sqrt"
+        MONFUNC_PARAM_VALUE: 1.0
     HEAD:
       PARAMS: [
         ["mlp", {"dims": [2048, 2048], "use_relu": True, "skip_last_layer_relu_bn": False}],

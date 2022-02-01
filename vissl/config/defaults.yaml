@@ -626,10 +626,16 @@ config:
         LAYER4_STRIDE: 2
         # whether to separate the last relu in trunk
         REMOVE_LAST_RELU: False
-        # whether a sign function with slope should be applied  on the trunk outputs
+        # whether a sign function with slope should be applied on the trunk outputs
         USE_SIGN_LAYER: False
         # parameter value of sign function with slope
         SIGN_PARAM_VALUE: 1.0
+        # whether a monotonic function should be applied on the trunk outputs
+        USE_MONFUNC_LAYER: False
+        # monotonic function type | sqrt, exp, log, tanh, softmax
+        MONFUNC_CLASS: "tanh"
+        # parameter value for monotonic function
+        MONFUNC_PARAM_VALUE: 1.0
 
       # ------------------------------------------------------------- #
       # EfficientNet params
