@@ -12,11 +12,11 @@ from vissl.models.heads import register_model_head
 from vissl.utils.fsdp_utils import fsdp_auto_wrap_bn, fsdp_wrapper
 
 
-@register_model_head("weighted_sum")
-class WeightedSum(nn.Module):
+@register_model_head("shifted_relus_weighted_sum")
+class ShiftedRelusWeightedSum(nn.Module):
     """
-    This module can be used to attach a layer that shifts input with different scalars, and returns 
-    the weighted sum of those.
+    This module can be used to attach a layer that  shifts relus with different scalars, and returns 
+    the weighted sum of those applied on the input.
 
     Accepts a 2D input tensor. Also accepts 4D input tensor of shape `N x C x 1 x 1`.
     """
@@ -24,18 +24,24 @@ class WeightedSum(nn.Module):
     def __init__(
         self,
         model_config: AttrDict,
+        linspace_start=0, 
+        linspace_end=2, 
+        num_steps=10
     ):
         """
         Args:
             model_config (AttrDict): dictionary config.MODEL in the config file
         """
         super().__init__()
-        self.weights = nn.Parameter(torch.empty((10),))
+        err_message = "Last Relu should be removed when using ShiftedRelusWeightedSum layer" 
+        assert model_config.TRUNK.RESNETS.REMOVE_LAST_RELU == True, err_message  
+        self.weights = nn.Parameter(torch.empty((num_steps),))
         nn.init.uniform_(self.weights)
-        self.weights.data = self.weights / torch.sum(self.weights)
-        self.shifts = torch.linspace(0, 2, steps=10)
+        # self.weights.data = self.weights / torch.sum(self.weights)
+        print(f"Shifts: linspace(start: {linspace_start}, end: {linspace_end}, steps: {num_steps})")
+        self.shifts = torch.linspace(linspace_start, linspace_end, steps=num_steps)
         
-    def calc_weighted_sum(self, batch: torch.Tensor):
+    def calc_weighted_sum_old_version(self, batch: torch.Tensor):
         x = torch.unsqueeze(batch, 0)
         shifts = self.shifts.to(self.weights.get_device())
         repeated_x = x.repeat((self.shifts.shape[0], 1, 1))
@@ -43,6 +49,14 @@ class WeightedSum(nn.Module):
         weighted_shifted_x = torch.einsum('i, ijk -> ijk', self.weights, shifted_x)
         weighted_sum = torch.sum(weighted_shifted_x, dim=0, keepdims=True)
         return torch.squeeze(weighted_sum)
+
+    def calc_weighted_sum(self, batch: torch.Tensor):   
+        shifts = self.shifts.to(batch.get_device())
+        weighted_sum = torch.zeros_like(batch)
+        for i in range(len(shifts)):
+            shifted_relu = torch.maximum(torch.zeros_like(batch), batch - shifts[i])
+            weighted_sum += self.weights[i] * shifted_relu
+        return weighted_sum
 
     def forward(self, batch: torch.Tensor):
         """
@@ -54,23 +68,23 @@ class WeightedSum(nn.Module):
         if isinstance(batch, list):
             assert (
                 len(batch) == 1
-            ), "WeightedSumWMLP input should be either a tensor (2D, 4D) or list containing 1 tensor."
+            ), "ShiftedRelusWeightedSum input should be either a tensor (2D, 4D) or list containing 1 tensor."
             batch = batch[0]
         if batch.ndim > 2:
             assert all(
                 d == 1 for d in batch.shape[2:]
-            ), f"WeightedSumWMLP expected 2D input tensor or 4D tensor of shape NxCx1x1. got: {batch.shape}"
+            ), f"ShiftedRelusWeightedSum expected 2D input tensor or 4D tensor of shape NxCx1x1. got: {batch.shape}"
             batch = batch.reshape((batch.size(0), batch.size(1)))
 
         out = self.calc_weighted_sum(batch)
         return out
 
 
-@register_model_head("weighted_sum_fsdp")
-def WeightedSum_FSDP(
+@register_model_head("shifted_relus_weighted_sum_fsdp")
+def ShiftedRelusWeightedSum_FSDP(
     model_config: AttrDict,
 ):
-    wsum = WeightedSum(
+    wsum = ShiftedRelusWeightedSum(
         model_config,
     )
     wsum = fsdp_auto_wrap_bn(wsum)

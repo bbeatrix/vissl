@@ -68,6 +68,37 @@ class SignLayer(nn.Module):
         return self.sign_with_param(input_tensor)
 
 
+class MonFuncLayer(nn.Module):
+    def __init__(self, param, func_class):
+        super(MonFuncLayer, self).__init__()
+        self.param = param
+        print(f"\nMonFunc parameter value: {self.param}\n")
+
+        if func_class == "sqrt":
+            self.func = torch.sqrt
+        elif func_class == "exp":
+            self.func = torch.exp
+        elif func_class == "log":
+            self.func = torch.log
+        elif func_class == "tanh":
+            self.func = torch.tanh
+        elif func_class == "softmax":
+            self.func = torch.nn.Softmax(dim=0)
+        elif func_class == "pow":
+            self.func = torch.pow
+        else:
+            raise NotImplementedError
+
+        print(f"\nMonFunc class: {self.func}\n")
+
+    def forward(self, input_tensor):
+        if self.func.__name__ == "pow":
+            out = self.func(input_tensor, self.param)
+        else:
+            out = self.func(self.param * input_tensor)
+        return out
+
+
 @register_model_trunk("resnet")
 class ResNeXt(nn.Module):
     """
@@ -102,6 +133,7 @@ class ResNeXt(nn.Module):
         )
 
         self.use_sign_layer = self.model_config.TRUNK.RESNETS.USE_SIGN_LAYER
+        self.use_monfunc_layer = self.model_config.TRUNK.RESNETS.USE_MONFUNC_LAYER
         self.remove_last_relu = self.model_config.TRUNK.RESNETS.REMOVE_LAST_RELU
         
         (n1, n2, n3, n4) = BLOCK_CONFIG[self.depth]
@@ -191,6 +223,13 @@ class ResNeXt(nn.Module):
             model_sign_layer = SignLayer(self.sign_param_value)
             feature_block_list.append(("sign", model_sign_layer),)
             self.feat_eval_mapping["sign"] = "sign"
+
+        if self.use_monfunc_layer:
+            monfunc_param_value = self.model_config.TRUNK.RESNETS.MONFUNC_PARAM_VALUE
+            monfunc_class = self.model_config.TRUNK.RESNETS.MONFUNC_CLASS
+            model_monfunc_layer = MonFuncLayer(monfunc_param_value, monfunc_class)
+            feature_block_list.append(("monfunc", model_monfunc_layer),)
+            self.feat_eval_mapping["monfunc"] = "monfunc"
 
         self._feature_blocks = nn.ModuleDict(feature_block_list)
 

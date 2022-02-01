@@ -10,15 +10,15 @@ import torch.nn as nn
 from vissl.config import AttrDict
 from vissl.models.heads import register_model_head
 from vissl.models.heads.mlp import MLP
-from vissl.models.heads.weighted_sum import WeightedSum
+from vissl.models.heads.shifted_relus_weighted_sum import ShiftedRelusWeightedSum
 from vissl.utils.fsdp_utils import fsdp_auto_wrap_bn, fsdp_wrapper
 
 
-@register_model_head("weighted_sum_wmlp")
-class WeightedSumWithMLP(nn.Module):
+@register_model_head("shifted_relus_weighted_sum_wmlp")
+class ShiftedRelusWeightedSumWithMLP(nn.Module):
     """
-    This module can be used to attach a layer that shifts input with different scalars, and returns 
-    the weighted sum of those.
+    This module can be used to attach a layer that shifts relus with different scalars, and returns 
+    the weighted sum of those applied on the input, also can have multiple linear layers on top.
 
     Accepts a 2D input tensor. Also accepts 4D input tensor of shape `N x C x 1 x 1`.
     """
@@ -26,6 +26,7 @@ class WeightedSumWithMLP(nn.Module):
     def __init__(
         self,
         model_config: AttrDict,
+        shifts_linspace: List[int],
         in_channels: int,
         dims: List[int],
         use_bn: bool = False,
@@ -34,6 +35,7 @@ class WeightedSumWithMLP(nn.Module):
         """
         Args:
             model_config (AttrDict): dictionary config.MODEL in the config file
+            shifts_linspace (list): list of ints: start and endpoint, num steps of linspace in weghted sum  
             in_channels (int): number of channels the input has. This information is
                                used to attached the BatchNorm2D layer.
             dims (int): dimensions of the linear layer. Example [8192, 1000] which means
@@ -41,7 +43,7 @@ class WeightedSumWithMLP(nn.Module):
         """
         super().__init__()
 
-        self.weighted_sum = WeightedSum(model_config)
+        self.shifted_relus_weighted_sum = ShiftedRelusWeightedSum(model_config, *shifts_linspace)
         self.channel_bn = nn.BatchNorm2d(
             in_channels,
             eps=model_config.HEAD.BATCHNORM_EPS,
@@ -59,15 +61,15 @@ class WeightedSumWithMLP(nn.Module):
         if isinstance(batch, list):
             assert (
                 len(batch) == 1
-            ), "WeightedSumWMLP input should be either a tensor (2D, 4D) or list containing 1 tensor."
+            ), "ShiftedRelusWeightedSumWMLP input should be either a tensor (2D, 4D) or list containing 1 tensor."
             batch = batch[0]
         if batch.ndim > 2:
             assert all(
                 d == 1 for d in batch.shape[2:]
-            ), f"WeightedSumWMLP expected 2D input tensor or 4D tensor of shape NxCx1x1. got: {batch.shape}"
+            ), f"ShiftedRelusWeightedSumWMLP expected 2D input tensor or 4D tensor of shape NxCx1x1. got: {batch.shape}"
             batch = batch.reshape((batch.size(0), batch.size(1)))
 
-        out = self.weighted_sum(batch)
+        out = self.shifted_relus_weighted_sum(batch)
 
         # MLP
         if len(out.shape) == 2:
@@ -80,11 +82,11 @@ class WeightedSumWithMLP(nn.Module):
         return out
 
 
-@register_model_head("weighted_sum_wmlp_fsdp")
-def WeightedSum_WMLPFSDP(
+@register_model_head("shifted_relus_weighted_sum_wmlp_fsdp")
+def ShiftedRelusWeightedSum_WMLPFSDP(
     model_config: AttrDict,
 ):
-    wsum = WeightedSumWMLP(
+    wsum = ShiftedRelusWeightedSumWMLP(
         model_config,
     )
     wsum = fsdp_auto_wrap_bn(wsum)
