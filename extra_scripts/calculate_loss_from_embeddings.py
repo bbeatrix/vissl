@@ -1,6 +1,7 @@
 from vissl.utils.extract_features_utils import ExtractedFeaturesLoader
 from vissl.losses.barlow_twins_loss import BarlowTwinsCriterion
 import os
+import re
 import torch
 
 batch_size = 512
@@ -8,14 +9,25 @@ dirs_path = "/data/shared/data/vissl_pretrained_models/extracted_features/simclr
 checkpoint_dirs = os.listdir(dirs_path)
 print("Number of checkpoints: ", len(checkpoint_dirs))
 iteration_checkpoint_dirs = [f for f in checkpoint_dirs if "model_iteration" in f]
+
+def num_sort(test_string):
+    return list(map(int, re.findall(r'\d+', test_string)))[0]
+
+iteration_checkpoint_dirs.sort(key=num_sort)
+
 print("Number of iteration checkpoints: ", len(iteration_checkpoint_dirs))
 
 test_avg_loss = []
 test_avg_on_diag_loss_term = []
 test_avg_scaled_off_diag_loss_term = []
 
+bt_criterion = BarlowTwinsCriterion(lambda_=0.0051,
+                                    scale_loss=0.024,
+                                    embedding_dim=2048)
+
 for checkpoint_dir in iteration_checkpoint_dirs: 
-    features = ExtractedFeaturesLoader.load_features(input_dir=os.path.join(dirs_path, checkpoint_dirs[0]), split="test", layer="res5avg")
+    print(checkpoint_dir)
+    features = ExtractedFeaturesLoader.load_features(input_dir=os.path.join(dirs_path, checkpoint_dir), split="test", layer="res5avg")
     features_array = features['features'].reshape(-1, 2048)
 
     num_feats = len(features_array)
@@ -26,10 +38,6 @@ for checkpoint_dir in iteration_checkpoint_dirs:
         if len(features_array[i:]) < batch_size:
             break
         features_batch = features_array[i:i+batch_size]
-
-        bt_criterion = BarlowTwinsCriterion(lambda_=0.0051,
-                                            scale_loss=0.024,
-                                            embedding_dim=2048)
 
         batch_loss, on_diag_term, scaled_off_diag_term = bt_criterion.forward_with_details(embedding=torch.from_numpy(features_batch))
         print("loss on one batch, terms: ", batch_loss, on_diag_term, scaled_off_diag_term)
