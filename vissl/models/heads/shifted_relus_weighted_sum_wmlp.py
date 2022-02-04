@@ -29,6 +29,7 @@ class ShiftedRelusWeightedSumWithMLP(nn.Module):
         shifts_linspace: List[int],
         in_channels: int,
         dims: List[int],
+        use_first_bn=True,
         use_bn: bool = False,
         use_relu: bool = False,
     ):
@@ -40,15 +41,20 @@ class ShiftedRelusWeightedSumWithMLP(nn.Module):
                                used to attached the BatchNorm2D layer.
             dims (int): dimensions of the linear layer. Example [8192, 1000] which means
                         attaches `nn.Linear(8192, 1000, bias=True)`
+            use_first_bn (bool): whether to use the batchnorm before linear layer, as in linear_eval_mlp head
         """
         super().__init__()
 
         self.shifted_relus_weighted_sum = ShiftedRelusWeightedSum(model_config, *shifts_linspace)
-        self.channel_bn = nn.BatchNorm2d(
-            in_channels,
-            eps=model_config.HEAD.BATCHNORM_EPS,
-            momentum=model_config.HEAD.BATCHNORM_MOMENTUM,
-        )
+
+        if use_first_bn:
+            self.channel_bn = nn.BatchNorm2d(
+                in_channels,
+                eps=model_config.HEAD.BATCHNORM_EPS,
+                momentum=model_config.HEAD.BATCHNORM_MOMENTUM,
+            )
+        else:
+            self.channel_bn = nn.Identity()
         self.clf = MLP(model_config, dims, use_bn=use_bn, use_relu=use_relu)
 
     def forward(self, batch: torch.Tensor):
