@@ -26,36 +26,34 @@ class ShiftedRelusWeightedSum(nn.Module):
         model_config: AttrDict,
         linspace_start=0, 
         linspace_end=2, 
-        num_steps=10
+        num_steps=10,
+        weights_init_type="ones"
     ):
         """
         Args:
             model_config (AttrDict): dictionary config.MODEL in the config file
+            linspace_start (int): first shift's value
+            linspace_end (int): last shift's value
+            num_steps (int): number of shifts
+            weights_init_type (str): ones/uniform init of weights
         """
         super().__init__()
         err_message = "Last Relu should be removed when using ShiftedRelusWeightedSum layer" 
         assert model_config.TRUNK.RESNETS.REMOVE_LAST_RELU == True, err_message  
         self.weights = nn.Parameter(torch.empty((num_steps),))
-        nn.init.uniform_(self.weights)
-        # self.weights.data = self.weights / torch.sum(self.weights)
+        if weights_init_type == "ones":
+            nn.init.ones_(self.weights)
+        else:
+            nn.init.uniform_(self.weights)
         print(f"Shifts: linspace(start: {linspace_start}, end: {linspace_end}, steps: {num_steps})")
         self.shifts = torch.linspace(linspace_start, linspace_end, steps=num_steps)
-        
-    def calc_weighted_sum_old_version(self, batch: torch.Tensor):
-        x = torch.unsqueeze(batch, 0)
-        shifts = self.shifts.to(self.weights.get_device())
-        repeated_x = x.repeat((self.shifts.shape[0], 1, 1))
-        shifted_x =  x + torch.einsum('i, ijk -> ijk', shifts, repeated_x)
-        weighted_shifted_x = torch.einsum('i, ijk -> ijk', self.weights, shifted_x)
-        weighted_sum = torch.sum(weighted_shifted_x, dim=0, keepdims=True)
-        return torch.squeeze(weighted_sum)
-
+ 
     def calc_weighted_sum(self, batch: torch.Tensor):   
         shifts = self.shifts.to(batch.get_device())
         weighted_sum = torch.zeros_like(batch)
         for i in range(len(shifts)):
             shifted_relu = torch.maximum(torch.zeros_like(batch), batch - shifts[i])
-            weighted_sum += self.weights[i] * shifted_relu
+            weighted_sum += torch.abs(self.weights[i]) * shifted_relu
         return weighted_sum
 
     def forward(self, batch: torch.Tensor):
