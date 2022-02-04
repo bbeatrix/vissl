@@ -45,7 +45,7 @@ def plot_shifted_relus_weighted_sum(shifts, learned_weights, name):
     plt.plot(x, np.maximum(0, x), '--', alpha=0.4, color="orange", label="relu")
 
     plt.xlabel('x')
-    plt.ylabel('y')
+    plt.ylabel('f(x)')
     plt.grid(True, color="0.9")
     plt.legend()
     plt.title(f'shifted relus weighted sum function at: {name}')
@@ -53,6 +53,7 @@ def plot_shifted_relus_weighted_sum(shifts, learned_weights, name):
     save_filename = dirs_path + name + "_learned_func.png"
     plt.savefig(save_filename, bbox_inches='tight')
     plt.clf()
+    plt.cla()
     return save_filename
 
 filenames = []
@@ -67,7 +68,9 @@ for checkpoint_file in phase_checkpoints:
         filenames.append(save_filename)
 
 # build gif
-with imageio.get_writer(dirs_path + 'learned_func_gif.gif', mode='I') as writer:
+save_gif_path = dirs_path + dirs_path.split("/")[-2] + '_learned_func.gif'
+print("Saving plot gif to ", save_gif_path)
+with imageio.get_writer(save_gif_path, mode='I') as writer:
     for filename in filenames:
         image = imageio.imread(filename)
         writer.append_data(image)
