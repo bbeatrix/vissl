@@ -41,10 +41,16 @@ class ShiftedRelusWeightedSum(nn.Module):
         err_message = "Last Relu should be removed when using ShiftedRelusWeightedSum layer" 
         assert model_config.TRUNK.RESNETS.REMOVE_LAST_RELU == True, err_message  
         self.weights = nn.Parameter(torch.empty((num_steps),))
-        if weights_init_type == "ones":
+        if weights_init_type == "onehot":
+            with torch.no_grad():
+                nn.init.zeros_(self.weights)
+                self.weights.data[0] = 1.0
+        elif weights_init_type == "ones":
             nn.init.ones_(self.weights)
         else:
             nn.init.uniform_(self.weights)
+
+        print("\n Weights of relus at init: ", self.weights)
         print(f"Shifts: linspace(start: {linspace_start}, end: {linspace_end}, steps: {num_steps})")
         self.shifts = torch.linspace(linspace_start, linspace_end, steps=num_steps)
  
