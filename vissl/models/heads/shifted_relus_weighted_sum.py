@@ -51,8 +51,11 @@ class ShiftedRelusWeightedSum(nn.Module):
             nn.init.uniform_(self.weights)
 
         print("\n Weights of relus at init: ", self.weights)
-        print(f"Shifts: linspace(start: {linspace_start}, end: {linspace_end}, steps: {num_steps})")
-        self.shifts = torch.linspace(linspace_start, linspace_end, steps=num_steps)
+        print(f"Shift init values from: linspace(start: {linspace_start}, end: {linspace_end}, steps: {num_steps})")
+        self.shifts = nn.Parameter(torch.empty((num_steps),))
+        with torch.no_grad():
+            self.shifts.data = torch.linspace(linspace_start, linspace_end, steps=num_steps)
+        print("\n Shifts of relus at init: ", self.shifts)
  
     def calc_weighted_sum(self, batch: torch.Tensor):   
         shifts = self.shifts.to(batch.get_device())
