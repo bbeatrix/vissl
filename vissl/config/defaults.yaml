@@ -1398,5 +1398,7 @@ config:
     SIGMA: 0.1
     # number of neighbors to consider.
     TOPK: 200
-    # if the features should be l2 normalized, set this to True
-    L2_NORM_FEATS: False
+    # if the features should be normalized, set this to True
+    LP_NORM_FEATS: False
+    # set which L-p norm to use at normalization, p=2 by default in general
+    NORM_P_VALUE: 2

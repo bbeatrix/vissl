@@ -39,8 +39,11 @@ def nearest_neighbor_test(cfg: AttrDict, layer_name: str = "heads"):
     train_features = torch.from_numpy(train_features).float().cuda().t()
     train_labels = torch.LongTensor(train_labels).cuda()
     num_classes = train_labels.max() + 1
-    if cfg.NEAREST_NEIGHBOR.L2_NORM_FEATS:
-        train_features = nn.functional.normalize(train_features, dim=0, p=2)
+    if cfg.NEAREST_NEIGHBOR.LP_NORM_FEATS:
+        p_value = cfg.NEAREST_NEIGHBOR.NORM_P_VALUE
+        if p_value == "inf":
+            p_value = torch.inf
+        train_features = nn.functional.normalize(train_features, dim=0, p=p_value)
 
     test_out = merge_features(output_dir, "test", layer_name)
     test_features, test_labels = test_out["features"], test_out["targets"]
@@ -61,8 +64,9 @@ def nearest_neighbor_test(cfg: AttrDict, layer_name: str = "heads"):
             batch_size = targets.shape[0]
             features = torch.from_numpy(features).float().cuda()
             targets = torch.LongTensor(targets).cuda()
-            if cfg.NEAREST_NEIGHBOR.L2_NORM_FEATS:
-                features = nn.functional.normalize(features, dim=1, p=2)
+            if cfg.NEAREST_NEIGHBOR.LP_NORM_FEATS:
+                p_value = cfg.NEAREST_NEIGHBOR.NORM_P_VALUE
+                features = nn.functional.normalize(features, dim=1, p=p_value)
 
             # calculate the dot product and compute top-k neighbors
             similarity = torch.mm(features, train_features)

@@ -71,4 +71,5 @@ config:
   NEAREST_NEIGHBOR:
     SIGMA: 0.1
     TOPK: 20
-    L2_NORM_FEATS: True
+    LP_NORM_FEATS: True
+    NORM_P_VALUE: 2
