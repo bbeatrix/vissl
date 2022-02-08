@@ -72,7 +72,7 @@ config:
         SIGN_PARAM_VALUE: 1.0
     HEAD:
       PARAMS: [
-        ["shifted_relus_weighted_sum_wmlp", {"shifts_linspace": [0, 2, 10], "in_channels": 2048, "dims": [2048, 1000], use_first_bn: True}],
+        ["shifted_relus_weighted_sum_wmlp", {"shifts_linspace": [-5, 5, 10], "in_channels": 2048, "dims": [2048, 1000], use_first_bn: True}],
       ]
     WEIGHTS_INIT:
       PARAMS_FILE: ""
@@ -81,6 +81,9 @@ config:
       CONVERT_BN_TO_SYNC_BN: True
       SYNC_BN_TYPE: apex
       GROUP_SIZE: 8
+    AMP_PARAMS:
+      USE_AMP: True
+      AMP_ARGS: {"opt_level": "O1"}
   LOSS:
     name: cross_entropy_multiple_output_single_target
     cross_entropy_multiple_output_single_target:
