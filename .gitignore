@@ -78,6 +78,7 @@ target/
 
 # VScode iDE
 .vscode/
+.vscode-server/
 
 # Docusaurus site
 website/yarn.lock
