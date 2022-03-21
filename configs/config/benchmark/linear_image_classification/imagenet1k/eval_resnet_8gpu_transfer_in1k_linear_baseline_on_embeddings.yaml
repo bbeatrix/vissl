@@ -1,0 +1,114 @@
+# @package _global_
+config:
+  VERBOSE: True
+  LOG_FREQUENCY: 10
+  TEST_ONLY: False
+  TEST_EVERY_NUM_EPOCH: 1
+  TEST_MODEL: True
+  SEED_VALUE: 0
+  MULTI_PROCESSING_METHOD: forkserver
+  HOOKS:
+    PERF_STATS:
+      MONITOR_PERF_STATS: True
+    TENSORBOARD_SETUP:
+      USE_TENSORBOARD: True
+  DATA:
+    NUM_DATALOADER_WORKERS: 5
+    TRAIN:
+      DATA_SOURCES: [npy_dataset]
+      LABEL_SOURCES: [disk_filelist]
+      DATA_PATHS: [
+        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings.npy",
+        "/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings_chunk1.npy",
+        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings_chunk2.npy",
+        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings_chunk3.npy"  
+        ]
+      LABEL_PATHS: [
+        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets.npy",
+        "/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets_chunk1.npy",
+        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets_chunk2.npy", 
+        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets_chunk3.npy" 
+        ]
+      DATASET_NAMES: [
+        simclr_imagenet1k_resnet50_phase999_embeddings_filelist_chunk1, 
+        #simclr_imagenet1k_resnet50_phase999_embeddings_filelist_chunk2, simclr_imagenet1k_resnet50_phase999_embeddings_filelist_chunk3
+        ]
+      BATCHSIZE_PER_REPLICA: 256
+      TRANSFORMS:
+        - name: ToTensor
+      MMAP_MODE: True
+      COPY_TO_LOCAL_DISK: False
+      COPY_DESTINATION_DIR: /tmp/imagenet1k_embeddings/
+    TEST:
+      DATA_SOURCES: [npy_dataset]
+      LABEL_SOURCES: [disk_filelist]
+      DATA_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_embeddings.npy"]
+      LABEL_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_targets.npy"]
+      DATASET_NAMES: [simclr_imagenet1k_resnet50_phase999_embeddings_filelist]
+      BATCHSIZE_PER_REPLICA: 256
+      TRANSFORMS:
+        - name: ToTensor
+      MMAP_MODE: True
+      COPY_TO_LOCAL_DISK: False
+      COPY_DESTINATION_DIR: /tmp/imagenet1k_embeddings/
+  METERS:
+    name: accuracy_list_meter
+    accuracy_list_meter:
+      num_meters: 1
+      topk_values: [1, 5]
+  TRAINER:
+    TRAIN_STEP_NAME: standard_train_step
+  MODEL:
+    FEATURE_EVAL_SETTINGS:
+      EVAL_MODE_ON: True
+      FREEZE_TRUNK_ONLY: True
+      EXTRACT_TRUNK_FEATURES_ONLY: False
+      SHOULD_FLATTEN_FEATS: False
+    TRUNK:
+      NAME: identity
+    HEAD:
+      PARAMS: [
+        ["shifted_relus_weighted_sum_wmlp", {"shifts_linspace": [-5, 5, 10], "in_channels": 2048, "dims": [2048, 1000], use_first_bn: True}],
+      ]
+    WEIGHTS_INIT:
+      PARAMS_FILE: ""
+      STATE_DICT_KEY_NAME: classy_state_dict
+    SYNC_BN_CONFIG:
+      CONVERT_BN_TO_SYNC_BN: True
+      SYNC_BN_TYPE: apex
+      GROUP_SIZE: 8
+  LOSS:
+    name: cross_entropy_multiple_output_single_target
+    cross_entropy_multiple_output_single_target:
+      ignore_index: -1
+  OPTIMIZER:
+      name: sgd
+      # In the OSS Caffe2 benchmark, RN50 models use 1e-4 and AlexNet models 5e-4
+      weight_decay: 0.0005
+      momentum: 0.9
+      num_epochs: 28
+      nesterov: True
+      regularize_bn: False
+      regularize_bias: True
+      param_schedulers:
+        lr:
+          auto_lr_scaling:
+            auto_scale: true
+            base_value: 0.01
+            base_lr_batch_size: 256
+          name: multistep
+          values: [0.01, 0.001, 0.0001, 0.00001]
+          milestones: [8, 16, 24]
+          update_interval: epoch
+  DISTRIBUTED:
+    BACKEND: nccl
+    NUM_NODES: 1
+    NUM_PROC_PER_NODE: 8
+    INIT_METHOD: tcp
+    RUN_ID: auto
+  MACHINE:
+    DEVICE: gpu
+  CHECKPOINT:
+    DIR: "."
+    AUTO_RESUME: True
+    CHECKPOINT_FREQUENCY: 1
