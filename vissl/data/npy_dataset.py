@@ -35,9 +35,8 @@ class NpyDataset(Dataset):
         self.cfg = cfg
         self.split = split
         self.data_source = data_source
-        self._num_samples = max(self.DEFAULT_SIZE, cfg.DATA[split].DATA_LIMIT)
-
         self.dataset = np.load(path)
+        self._num_samples = max(len(self.dataset), self.DEFAULT_SIZE, cfg.DATA[split].DATA_LIMIT)
 
     def num_samples(self):
         """

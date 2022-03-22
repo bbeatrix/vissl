@@ -15,7 +15,7 @@ from vissl.models.trunks import register_model_trunk
 
 @register_model_trunk("identity")
 class IdentityModel(nn.Module):
-    def __init__(self, model_config: AttrDict):
+    def __init__(self, model_config: AttrDict, model_name: str):
         super(IdentityModel, self).__init__()
         self.identity = nn.Identity()
         self.model_config = model_config

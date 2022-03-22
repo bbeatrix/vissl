@@ -17,22 +17,8 @@ config:
     TRAIN:
       DATA_SOURCES: [npy_dataset]
       LABEL_SOURCES: [disk_filelist]
-      DATA_PATHS: [
-        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings.npy",
-        "/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings_chunk1.npy",
-        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings_chunk2.npy",
-        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings_chunk3.npy"  
-        ]
-      LABEL_PATHS: [
-        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets.npy",
-        "/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets_chunk1.npy",
-        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets_chunk2.npy", 
-        #"/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets_chunk3.npy" 
-        ]
-      DATASET_NAMES: [
-        simclr_imagenet1k_resnet50_phase999_embeddings_filelist_chunk1, 
-        #simclr_imagenet1k_resnet50_phase999_embeddings_filelist_chunk2, simclr_imagenet1k_resnet50_phase999_embeddings_filelist_chunk3
-        ]
+      DATA_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings.npy"]
+      LABEL_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets.npy"]
       BATCHSIZE_PER_REPLICA: 256
       TRANSFORMS:
         - name: ToTensor
@@ -44,7 +30,6 @@ config:
       LABEL_SOURCES: [disk_filelist]
       DATA_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_embeddings.npy"]
       LABEL_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_targets.npy"]
-      DATASET_NAMES: [simclr_imagenet1k_resnet50_phase999_embeddings_filelist]
       BATCHSIZE_PER_REPLICA: 256
       TRANSFORMS:
         - name: ToTensor
