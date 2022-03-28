@@ -210,6 +210,8 @@ config:
     # Common data options
     NUM_DATALOADER_WORKERS: 4 # Set this depending on the number of CPUs you have
     PIN_MEMORY: true # Makes CPU->GPU copy of the data faster
+    # whether to use same workers each time when iterating over a dataloader object
+    PERSISTENT_WORKERS: False
     # whether to overlap the data copy from host to GPU with the previous iteration.
     ENABLE_ASYNC_GPU_COPY: true
     # buffer size for gradient reduction. Set to 25 which is pytorch default.
