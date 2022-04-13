@@ -118,6 +118,7 @@ class ExtractedFeaturesLoader:
             output (Dict): contains features, targets, inds as the keys
         """
         logging.info(f"Merging features: {split} {layer}")
+        import gc
 
         # Reassemble each feature shard (dumped by a given rank)
         output_feats, output_targets = {}, {}
@@ -131,12 +132,18 @@ class ExtractedFeaturesLoader:
                 index = shard_content.indices[idx]
                 output_feats[index] = shard_content.features[idx]
                 output_targets[index] = shard_content.targets[idx]
+            del shard_content
+            gc.collect()
 
         # Sort the entries by sample index
+        logging.info(f"Sorting indices")
         indices = np.array(sorted(output_targets.keys()))
+        logging.info(f"Reordering features")
         features = np.array([output_feats[i] for i in indices])
+        logging.info(f"Reordering targets")
         targets = np.array([output_targets[i] for i in indices])
 
+        logging.info(f"Returning outputs")
         # Return the outputs
         N = len(indices)
         if flatten_features:
