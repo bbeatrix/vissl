@@ -18,8 +18,8 @@ config:
     TRAIN:
       DATA_SOURCES: [npy_dataset]
       LABEL_SOURCES: [disk_filelist]
-      DATA_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings.npy"]
-      LABEL_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets.npy"]
+      DATA_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/train_3view_embeddings.npy"]
+      LABEL_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/train_3view_targets.npy"]
       BATCHSIZE_PER_REPLICA: 2048
       TRANSFORMS:
         - name: ToTensor
@@ -29,8 +29,8 @@ config:
     TEST:
       DATA_SOURCES: [npy_dataset]
       LABEL_SOURCES: [disk_filelist]
-      DATA_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_embeddings.npy"]
-      LABEL_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_targets.npy"]
+      DATA_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/test_3view_embeddings.npy"]
+      LABEL_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/test_3view_targets.npy"]
       BATCHSIZE_PER_REPLICA: 2048
       TRANSFORMS:
         - name: ToTensor
@@ -78,9 +78,14 @@ config:
   OPTIMIZER:
       name: sgd
       # In the OSS Caffe2 benchmark, RN50 models use 1e-4 and AlexNet models 5e-4
+      use_larc: True # supported for SGD only for now
+      larc_config:
+        clip: False
+        eps: 1e-08
+        trust_coefficient: 0.001
       weight_decay: 0.0005
       momentum: 0.9
-      num_epochs: 28
+      num_epochs: 100
       nesterov: True
       regularize_bn: False
       regularize_bias: True
@@ -88,11 +93,12 @@ config:
         lr:
           auto_lr_scaling:
             auto_scale: true
-            base_value: 0.01
+            base_value: 0.5
             base_lr_batch_size: 256
           name: multistep
-          values: [0.01, 0.001, 0.0001, 0.00001]
-          milestones: [8, 16, 24]
+          values: [0.1, 0.01, 0.001]#, 0.0005]
+          #milestones: [8, 16, 24]
+          milestones: [30, 60]#, 90]
           update_interval: epoch
   DISTRIBUTED:
     BACKEND: nccl
