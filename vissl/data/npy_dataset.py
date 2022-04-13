@@ -84,5 +84,7 @@ class NpyDataset(QueueDataset):
             self._init_queues()
         is_success = True
         x = self.npy_dataset[idx]
-
+        if x.ndim > 3:
+            choice_idx = np.random.randint(0, x.shape[0])
+            x = x[choice_idx]
         return x, is_success
