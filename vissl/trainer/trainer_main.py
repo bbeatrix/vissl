@@ -642,8 +642,16 @@ class SelfSupervisionTrainer(object):
                         targets = input_sample["target"]
                         for idx in range(num_images):
                             index = input_sample["inds"][idx]
-                            out_features[feat_name][index] = feature[idx]
-                            out_targets[feat_name][index] = targets[idx].reshape(-1)
+                            if index in out_features[feat_name].keys():
+                                if out_features[feat_name][index].ndim == feature[idx].ndim:
+                                    out_features[feat_name][index] = np.expand_dims(out_features[feat_name][index], axis=0)
+                                out_features[feat_name][index] = np.concatenate(
+                                    [out_features[feat_name][index], np.expand_dims(feature[idx], axis=0)],
+                                    axis=0
+                                )
+                            else:
+                                out_features[feat_name][index] = feature[idx]
+                                out_targets[feat_name][index] = targets[idx].reshape(-1)
 
                 if (
                     feature_buffer_size
