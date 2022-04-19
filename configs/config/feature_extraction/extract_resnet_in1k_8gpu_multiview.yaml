@@ -13,7 +13,7 @@ config:
       BATCHSIZE_PER_REPLICA: 256
       TRANSFORMS:
         - name: ImgReplicatePil
-          num_times: 5
+          num_times: 3
         - name: RandomResizedCrop
           size: 224
         - name: RandomHorizontalFlip
