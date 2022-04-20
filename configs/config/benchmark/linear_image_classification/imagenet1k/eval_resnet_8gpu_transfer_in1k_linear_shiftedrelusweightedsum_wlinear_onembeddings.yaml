@@ -14,6 +14,7 @@ config:
       USE_TENSORBOARD: True
   DATA:
     NUM_DATALOADER_WORKERS: 5
+    PERSISTENT_WORKERS: True
     TRAIN:
       DATA_SOURCES: [npy_dataset]
       LABEL_SOURCES: [disk_filelist]
