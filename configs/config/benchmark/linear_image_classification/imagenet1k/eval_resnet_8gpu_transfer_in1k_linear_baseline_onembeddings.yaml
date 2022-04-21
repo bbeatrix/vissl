@@ -13,14 +13,14 @@ config:
     TENSORBOARD_SETUP:
       USE_TENSORBOARD: True
   DATA:
-    NUM_DATALOADER_WORKERS: 5
+    NUM_DATALOADER_WORKERS: 8
     PERSISTENT_WORKERS: True
     TRAIN:
       DATA_SOURCES: [npy_dataset]
       LABEL_SOURCES: [disk_filelist]
       DATA_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings.npy"]
       LABEL_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets.npy"]
-      BATCHSIZE_PER_REPLICA: 256
+      BATCHSIZE_PER_REPLICA: 2048
       TRANSFORMS:
         - name: ToTensor
       MMAP_MODE: True
@@ -31,7 +31,7 @@ config:
       LABEL_SOURCES: [disk_filelist]
       DATA_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_embeddings.npy"]
       LABEL_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_targets.npy"]
-      BATCHSIZE_PER_REPLICA: 256
+      BATCHSIZE_PER_REPLICA: 2048
       TRANSFORMS:
         - name: ToTensor
       MMAP_MODE: True
