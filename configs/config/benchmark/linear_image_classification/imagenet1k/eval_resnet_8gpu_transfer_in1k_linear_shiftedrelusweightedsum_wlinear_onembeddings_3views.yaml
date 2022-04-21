@@ -18,8 +18,8 @@ config:
     TRAIN:
       DATA_SOURCES: [npy_dataset]
       LABEL_SOURCES: [disk_filelist]
-      DATA_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_embeddings.npy"]
-      LABEL_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/train_targets.npy"]
+      DATA_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/train_3view_embeddings.npy"]
+      LABEL_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/train_3view_targets.npy"]
       BATCHSIZE_PER_REPLICA: 2048
       TRANSFORMS:
         - name: ToTensor
@@ -29,8 +29,8 @@ config:
     TEST:
       DATA_SOURCES: [npy_dataset]
       LABEL_SOURCES: [disk_filelist]
-      DATA_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_embeddings.npy"]
-      LABEL_PATHS: ["/data/shared/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_dataset/test_targets.npy"]
+      DATA_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/test_3view_embeddings.npy"]
+      LABEL_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/test_3view_targets.npy"]
       BATCHSIZE_PER_REPLICA: 2048
       TRANSFORMS:
         - name: ToTensor
