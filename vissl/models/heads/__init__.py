@@ -76,4 +76,5 @@ __all__ = [
     "MLP",
     "SiameseConcatView",
     "SwAVPrototypesHead",
+    "SignLayer"
 ]
