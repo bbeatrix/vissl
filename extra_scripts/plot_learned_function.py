@@ -8,7 +8,7 @@ import yaml
 
 plt.style.use("seaborn-poster")
 
-dirs_path = "/home/bbea/vissl/outputs/lineareval/shifted_relus_weighted_sum_wlinear_onesinit_negshifts/"
+dirs_path = "/home/bbea/vissl/outputs/_on_embeddings/lineareval_shiftedrelusweightedsum_wlinear_without_relu/"
 config_file = os.path.join(dirs_path, "train_config.yaml")
 with open(config_file, 'r') as stream:
     parsed_yaml=yaml.safe_load(stream)
