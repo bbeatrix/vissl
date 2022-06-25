@@ -1,7 +1,7 @@
 # @package _global_
 config:
   VERBOSE: True
-  LOG_FREQUENCY: 100
+  LOG_FREQUENCY: 10
   TEST_ONLY: False
   TEST_EVERY_NUM_EPOCH: 1
   TEST_MODEL: True
@@ -9,34 +9,44 @@ config:
   MULTI_PROCESSING_METHOD: forkserver
   HOOKS:
     PERF_STATS:
-      MONITOR_PERF_STATS: False
+      MONITOR_PERF_STATS: True
     TENSORBOARD_SETUP:
-      USE_TENSORBOARD: False
+      USE_TENSORBOARD: True
   DATA:
-    NUM_DATALOADER_WORKERS: 8
-    PERSISTENT_WORKERS: True
+    NUM_DATALOADER_WORKERS: 5
     TRAIN:
-      DATA_SOURCES: [npy_dataset]
-      LABEL_SOURCES: [disk_filelist]
-      DATA_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/train_3view_embeddings.npy"]
-      LABEL_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/train_3view_targets.npy"]
-      BATCHSIZE_PER_REPLICA: 2048
+      DATA_SOURCES: [disk_folder]
+      LABEL_SOURCES: [disk_folder]
+      DATASET_NAMES: [imagenet1k_folder]
+      BATCHSIZE_PER_REPLICA: 256
       TRANSFORMS:
+        - name: RandomResizedCrop
+          size: 224
+        - name: RandomHorizontalFlip
         - name: ToTensor
+        - name: Normalize
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
       MMAP_MODE: True
       COPY_TO_LOCAL_DISK: False
-      COPY_DESTINATION_DIR: /tmp/imagenet1k_embeddings/
+      COPY_DESTINATION_DIR: /tmp/imagenet1k/
     TEST:
-      DATA_SOURCES: [npy_dataset]
-      LABEL_SOURCES: [disk_filelist]
-      DATA_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/test_3view_embeddings.npy"]
-      LABEL_PATHS: ["/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_3view_embeddings_dataset/test_3view_targets.npy"]
-      BATCHSIZE_PER_REPLICA: 2048
+      DATA_SOURCES: [disk_folder]
+      LABEL_SOURCES: [disk_folder]
+      DATASET_NAMES: [imagenet1k_folder]
+      BATCHSIZE_PER_REPLICA: 256
       TRANSFORMS:
+        - name: Resize
+          size: 256
+        - name: CenterCrop
+          size: 224
         - name: ToTensor
+        - name: Normalize
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
       MMAP_MODE: True
       COPY_TO_LOCAL_DISK: False
-      COPY_DESTINATION_DIR: /tmp/imagenet1k_embeddings/
+      COPY_DESTINATION_DIR: /tmp/imagenet1k/
   METERS:
     name: accuracy_list_meter
     accuracy_list_meter:
@@ -50,11 +60,19 @@ config:
       FREEZE_TRUNK_ONLY: True
       EXTRACT_TRUNK_FEATURES_ONLY: False
       SHOULD_FLATTEN_FEATS: False
+      LINEAR_EVAL_FEAT_POOL_OPS_MAP: [
+        ["res5avg", ["Identity", []]],
+      ]
     TRUNK:
-      NAME: identity
+      NAME: resnet
+      RESNETS:
+        DEPTH: 50
+        REMOVE_LAST_RELU: True
+        USE_SIGN_LAYER: False
+        SIGN_PARAM_VALUE: 0.0
     HEAD:
       PARAMS: [
-        ["eval_mlp", {"in_channels": 2048, "dims": [2048, 1000]}],
+        ["shifted_relus_weighted_sum_wmlp", {"shifts_linspace": [0, 2, 10], "in_channels": 2048, "dims": [2048, 1000], use_first_bn: True, fixed_mlp_params: True}],
       ]
     WEIGHTS_INIT:
       PARAMS_FILE: ""
@@ -65,12 +83,7 @@ config:
       GROUP_SIZE: 8
     AMP_PARAMS:
       USE_AMP: True
-      # Only applicable for Apex AMP_TYPE.
-      # Use O1 as it is robust and stable than O3. If you want to use O3, we recommend the following setting:
-      # {"opt_level": "O3", "keep_batchnorm_fp32": True, "master_weights": True, "loss_scale": "dynamic"}
       AMP_ARGS: {"opt_level": "O1"}
-      # we support pytorch amp as well which is availale in pytorch>=1.6.
-      AMP_TYPE: "apex"  # apex | pytorch
   LOSS:
     name: cross_entropy_multiple_output_single_target
     cross_entropy_multiple_output_single_target:
@@ -78,14 +91,9 @@ config:
   OPTIMIZER:
       name: sgd
       # In the OSS Caffe2 benchmark, RN50 models use 1e-4 and AlexNet models 5e-4
-      use_larc: True # supported for SGD only for now
-      larc_config:
-        clip: False
-        eps: 1e-08
-        trust_coefficient: 0.001
       weight_decay: 0.0005
       momentum: 0.9
-      num_epochs: 100
+      num_epochs: 28
       nesterov: True
       regularize_bn: False
       regularize_bias: True
@@ -93,12 +101,11 @@ config:
         lr:
           auto_lr_scaling:
             auto_scale: true
-            base_value: 0.5
+            base_value: 0.01
             base_lr_batch_size: 256
           name: multistep
-          values: [0.1, 0.01, 0.001]#, 0.0005]
-          #milestones: [8, 16, 24]
-          milestones: [30, 60]#, 90]
+          values: [0.01, 0.001, 0.0001, 0.00001]
+          milestones: [8, 16, 24]
           update_interval: epoch
   DISTRIBUTED:
     BACKEND: nccl
@@ -110,5 +117,5 @@ config:
     DEVICE: gpu
   CHECKPOINT:
     DIR: "."
-    AUTO_RESUME: False
+    AUTO_RESUME: True
     CHECKPOINT_FREQUENCY: 1

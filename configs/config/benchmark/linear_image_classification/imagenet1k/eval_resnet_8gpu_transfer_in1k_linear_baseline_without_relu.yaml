@@ -61,7 +61,10 @@ config:
       EXTRACT_TRUNK_FEATURES_ONLY: False
       SHOULD_FLATTEN_FEATS: False
       LINEAR_EVAL_FEAT_POOL_OPS_MAP: [
+        #["res5", ["AvgPool2d", [[6, 6], 1, 0]]],
+        #["res5", ["AdaptiveAvgPool2d", [[1, 1]]]],
         ["res5avg", ["Identity", []]],
+        #["sign", ["Identity", []]],
       ]
     TRUNK:
       NAME: resnet
@@ -69,10 +72,16 @@ config:
         DEPTH: 50
         REMOVE_LAST_RELU: True
         USE_SIGN_LAYER: False
-        SIGN_PARAM_VALUE: 0.0
+        SIGN_PARAM_VALUE: 1.0
     HEAD:
       PARAMS: [
-        ["shifted_relus_weighted_sum_wmlp", {"shifts_linspace": [0, 2, 10], "in_channels": 2048, "dims": [2048, 1000], use_first_bn: True}],
+        #["mlp", {"dims": [8192, 1000]}],
+        #["mlp", {"dims": [2048, 1000]}],
+        #["mlp", {"dims": [2048, 1000]}],
+        #["eval_mlp", {"in_channels": 2048, "dims": [8192, 1000]}],
+        #["eval_mlp", {"in_channels": 2048, "dims": [2048, 1000]}],
+        #["eval_mlp", {"in_channels": 2048, "dims": [2048, 1000]}],
+        ["eval_mlp", {"in_channels": 2048, "dims": [2048, 1000]}],
       ]
     WEIGHTS_INIT:
       PARAMS_FILE: ""
@@ -81,9 +90,6 @@ config:
       CONVERT_BN_TO_SYNC_BN: True
       SYNC_BN_TYPE: apex
       GROUP_SIZE: 8
-    AMP_PARAMS:
-      USE_AMP: True
-      AMP_ARGS: {"opt_level": "O1"}
   LOSS:
     name: cross_entropy_multiple_output_single_target
     cross_entropy_multiple_output_single_target:
