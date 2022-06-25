@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
 from typing import List
 
 import torch
@@ -38,8 +39,10 @@ class ShiftedRelusWeightedSum(nn.Module):
             weights_init_type (str): ones/uniform init of weights
         """
         super().__init__()
-        err_message = "Last Relu should be removed when using ShiftedRelusWeightedSum layer" 
-        assert model_config.TRUNK.RESNETS.REMOVE_LAST_RELU == True, err_message  
+        # err_message = "Last Relu should be removed when using ShiftedRelusWeightedSum layer" 
+        # assert model_config.TRUNK.RESNETS.REMOVE_LAST_RELU == True, err_message  
+        if model_config.TRUNK.RESNETS.REMOVE_LAST_RELU == False:
+            logging.info("Last relu in trunk is not removed, applying shifted relus on relu output!")
         self.weights = nn.Parameter(torch.empty((num_steps),))
         if weights_init_type == "onehot":
             with torch.no_grad():
@@ -50,19 +53,19 @@ class ShiftedRelusWeightedSum(nn.Module):
         else:
             nn.init.uniform_(self.weights)
 
-        print("\n Weights of relus at init: ", self.weights)
-        print(f"Shift init values from: linspace(start: {linspace_start}, end: {linspace_end}, steps: {num_steps})")
+        logging.info("\n Weights of relus at init: ", self.weights)
+        logging.info(f"Shift init values from: linspace(start: {linspace_start}, end: {linspace_end}, steps: {num_steps})")
         self.shifts = nn.Parameter(torch.empty((num_steps),))
         with torch.no_grad():
             self.shifts.data = torch.linspace(linspace_start, linspace_end, steps=num_steps)
-        print("\n Shifts of relus at init: ", self.shifts)
+        logging.info("\n Shifts of relus at init: ", self.shifts)
  
     def calc_weighted_sum(self, batch: torch.Tensor):   
         shifts = self.shifts.to(batch.get_device())
         weighted_sum = torch.zeros_like(batch)
         for i in range(len(shifts)):
             shifted_relu = torch.maximum(torch.zeros_like(batch), batch - shifts[i])
-            weighted_sum += torch.abs(self.weights[i]) * shifted_relu
+            weighted_sum += self.weights[i] * shifted_relu
         return weighted_sum
 
     def forward(self, batch: torch.Tensor):
