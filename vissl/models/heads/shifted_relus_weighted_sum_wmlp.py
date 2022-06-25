@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import List
+from charset_normalizer import logging
 
 import torch
 import torch.nn as nn
@@ -32,6 +33,8 @@ class ShiftedRelusWeightedSumWithMLP(nn.Module):
         use_first_bn=True,
         use_bn: bool = False,
         use_relu: bool = False,
+        fixed_mlp_params = False,
+        weights_init_type = "ones"
     ):
         """
         Args:
@@ -45,7 +48,7 @@ class ShiftedRelusWeightedSumWithMLP(nn.Module):
         """
         super().__init__()
 
-        self.shifted_relus_weighted_sum = ShiftedRelusWeightedSum(model_config, *shifts_linspace)
+        self.shifted_relus_weighted_sum = ShiftedRelusWeightedSum(model_config, *shifts_linspace, weights_init_type)
 
         if use_first_bn:
             self.channel_bn = nn.BatchNorm2d(
@@ -56,6 +59,29 @@ class ShiftedRelusWeightedSumWithMLP(nn.Module):
         else:
             self.channel_bn = nn.Identity()
         self.clf = MLP(model_config, dims, use_bn=use_bn, use_relu=use_relu)
+
+        if fixed_mlp_params:
+            # Load and set params
+            print(self.channel_bn.state_dict())
+            device = torch.device('cpu')
+            mlp_head_state_dict = torch.load("/home/bbea/data/learned_eval_mlp_after_relu.pt", map_location=device)
+            logging.info(f"Loaded state dict contains the following paramd: {mlp_head_state_dict.keys()}")
+
+            self.channel_bn.weight.data = mlp_head_state_dict['0.channel_bn.weight'].cpu()
+            self.channel_bn.bias.data = mlp_head_state_dict['0.channel_bn.bias'].cpu()
+            self.channel_bn.running_mean = mlp_head_state_dict['0.channel_bn.running_mean'].cpu()
+            self.channel_bn.running_var = mlp_head_state_dict['0.channel_bn.running_var'].cpu()
+            self.channel_bn.num_batches_tracked = mlp_head_state_dict['0.channel_bn.num_batches_tracked'].cpu()
+            self.clf.clf[0].weight.data = mlp_head_state_dict['0.clf.clf.0.weight'].cpu()
+            self.clf.clf[0].bias.data = mlp_head_state_dict['0.clf.clf.0.bias'].cpu()
+
+            # Freeze params
+            self.channel_bn.track_running_stats = False
+            for param in self.channel_bn.parameters():
+                param.requires_grad = False
+
+            for param in self.clf.parameters():
+                param.requires_grad = False
 
     def forward(self, batch: torch.Tensor):
         """
@@ -92,7 +118,7 @@ class ShiftedRelusWeightedSumWithMLP(nn.Module):
 def ShiftedRelusWeightedSum_WMLPFSDP(
     model_config: AttrDict,
 ):
-    wsum = ShiftedRelusWeightedSumWMLP(
+    wsum = ShiftedRelusWeightedSumWithMLP(
         model_config,
     )
     wsum = fsdp_auto_wrap_bn(wsum)
