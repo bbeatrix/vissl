@@ -8,8 +8,8 @@ from vissl.utils.logger import setup_logging, shutdown_logging
 setup_logging(__name__)
 logging.info(f"Logging set up")
 
-extracted_feats_path = "/home/bbea/vissl/outputs/extracted_features/simclr_1node_imagenet1k_resnet50_phase999_final_trunkfeats_without_relu"
-merged_feats_path = "/home/bbea/data/simclr_1node_imagenet1k_resnet50_phase999_embeddings_without_relu_dataset/"
+extracted_feats_path = "/home/bbea/vissl/outputs/extracted_features/barlowtwins_imagenet1k_resnet200w2_1000epoch_final_trunkfeats"
+merged_feats_path = "/home/bbea/data/barlowtwins_imagenet1k_resnet200w2_epoch1000_embeddings_dataset/"
 
 layer = "res5avg"
 for split in ["train"]:
