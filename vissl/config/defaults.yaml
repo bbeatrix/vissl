@@ -67,6 +67,8 @@ config:
   VERBOSE: False
   # how frequently to log training stats like batch time, loss, training eta etc.
   LOG_FREQUENCY: 10
+  # if test on start, even before training
+  TEST_ON_START: True
   # if the workflow is only test and not training
   TEST_ONLY: False
   # if the model should be test as well. If set to False, only training will be done.
@@ -629,6 +631,10 @@ config:
         # whether to separate the last relu in trunk
         REMOVE_LAST_RELU: False
         # whether a sign function with slope should be applied on the trunk outputs
+        REPLACE_LAST_RELU: False
+        SHIFTED_RELUS_WEIGHTED_SUM:
+          shifts_linspace: [0, 2, 1]
+          weight_init_type: "onehot"
         USE_SIGN_LAYER: False
         # parameter value of sign function with slope
         SIGN_PARAM_VALUE: 1.0

@@ -278,6 +278,11 @@ class SelfSupervisionTask(ClassificationTask):
                 * self.num_train_phases_per_epoch
             )
             output_phases = []
+
+            # If set in config, run a test phase at start, even before training.
+            if self.config["TEST_ON_START"]:
+                output_phases.append({"train": False})
+
             for idx, phase in enumerate(phases):
                 output_phases.append(phase)
 
