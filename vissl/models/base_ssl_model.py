@@ -195,6 +195,12 @@ class BaseSSLMultiInputOutputModel(ClassyModel):
         logging.info("Freezing model trunk...")
         for param in self.trunk.parameters():
             param.requires_grad = False
+        print("\n")
+        for name, param in self.trunk.named_parameters():
+            if "relu.weights" in name:
+                print(f"Parameter name: {name}\n")
+                param.requires_grad = True
+        print("\n")
 
     def freeze_head_and_trunk(self):
         """

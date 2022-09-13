@@ -21,6 +21,7 @@ from vissl.models.model_helpers import (
     transform_model_input_data_type,
 )
 from vissl.models.trunks import register_model_trunk
+from vissl.models.heads.shifted_relus_weighted_sum import ShiftedRelusWeightedSum
 
 
 # For more depths, add the block config here
@@ -135,6 +136,7 @@ class ResNeXt(nn.Module):
         self.use_sign_layer = self.model_config.TRUNK.RESNETS.USE_SIGN_LAYER
         self.use_monfunc_layer = self.model_config.TRUNK.RESNETS.USE_MONFUNC_LAYER
         self.remove_last_relu = self.model_config.TRUNK.RESNETS.REMOVE_LAST_RELU
+        self.replace_last_relu = self.model_config.TRUNK.RESNETS.REPLACE_LAST_RELU
         
         (n1, n2, n3, n4) = BLOCK_CONFIG[self.depth]
         logging.info(
@@ -217,6 +219,16 @@ class ResNeXt(nn.Module):
 
         if self.remove_last_relu:
             model_layer4[2].relu = nn.Identity()
+            feature_block_list = feature_block_list[:-2]
+            del self.feat_eval_mapping["res5avg"]
+            del self.feat_eval_mapping["flatten"]
+
+        if self.replace_last_relu:
+            logging.info("\nReplacing original relu with weighted sum of shifted relus...\n")
+            shifts_linspace = self.model_config.TRUNK.RESNETS.SHIFTED_RELUS_WEIGHTED_SUM["shifts_linspace"]
+            weight_init_type = self.model_config.TRUNK.RESNETS.SHIFTED_RELUS_WEIGHTED_SUM["weight_init_type"]
+            model_layer4[2].relu = ShiftedRelusWeightedSum(self.model_config, shifts_linspace[0], shifts_linspace[1], shifts_linspace[2], weight_init_type)
+            #model_layer4[2]._modules['shifted_relus_weighted_sum'] = model_layer4[2]._modules.pop('relu')
 
         if self.use_sign_layer:
             self.sign_param_value = self.model_config.TRUNK.RESNETS.SIGN_PARAM_VALUE

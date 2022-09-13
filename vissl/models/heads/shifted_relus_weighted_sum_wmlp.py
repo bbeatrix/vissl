@@ -14,6 +14,12 @@ from vissl.models.heads.mlp import MLP
 from vissl.models.heads.shifted_relus_weighted_sum import ShiftedRelusWeightedSum
 from vissl.utils.fsdp_utils import fsdp_auto_wrap_bn, fsdp_wrapper
 
+from vissl.models.model_helpers import (
+    Flatten,
+    # _get_norm,
+)
+
+from vissl.models.trunks.resnext import SUPPORTED_DEPTHS, BLOCK_CONFIG
 
 @register_model_head("shifted_relus_weighted_sum_wmlp")
 class ShiftedRelusWeightedSumWithMLP(nn.Module):
@@ -49,6 +55,9 @@ class ShiftedRelusWeightedSumWithMLP(nn.Module):
         super().__init__()
 
         self.shifted_relus_weighted_sum = ShiftedRelusWeightedSum(model_config, *shifts_linspace, weights_init_type)
+
+        self.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1)) # resnet_model.avgpool
+        self.flatten = Flatten(1)
 
         if use_first_bn:
             self.channel_bn = nn.BatchNorm2d(
@@ -95,23 +104,20 @@ class ShiftedRelusWeightedSumWithMLP(nn.Module):
                 len(batch) == 1
             ), "ShiftedRelusWeightedSumWMLP input should be either a tensor (2D, 4D) or list containing 1 tensor."
             batch = batch[0]
-        if batch.ndim > 2:
-            assert all(
-                d == 1 for d in batch.shape[2:]
-            ), f"ShiftedRelusWeightedSumWMLP expected 2D input tensor or 4D tensor of shape NxCx1x1. got: {batch.shape}"
-            batch = batch.reshape((batch.size(0), batch.size(1)))
 
-        out = self.shifted_relus_weighted_sum(batch)
+        out0 = self.shifted_relus_weighted_sum(batch)
+        out1 = self.avgpool(out0)
+        out2 = self.flatten(out1)
 
         # MLP
-        if len(out.shape) == 2:
-            out = out.unsqueeze(2).unsqueeze(3)
-        assert len(out.shape) == 4, "Eval MLP head expects 4D tensor input"
-        out = self.channel_bn(out)
-        out = torch.flatten(out, start_dim=1)
-        out = self.clf(out)
+        if len(out2.shape) == 2:
+            out2 = out2.unsqueeze(2).unsqueeze(3)
+        assert len(out2.shape) == 4, "Eval MLP head expects 4D tensor input"
+        out3 = self.channel_bn(out2)
+        out4 = torch.flatten(out3, start_dim=1)
+        out5 = self.clf(out4)
 
-        return out
+        return out5
 
 
 @register_model_head("shifted_relus_weighted_sum_wmlp_fsdp")

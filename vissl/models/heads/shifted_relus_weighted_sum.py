@@ -53,18 +53,18 @@ class ShiftedRelusWeightedSum(nn.Module):
         else:
             nn.init.uniform_(self.weights)
 
-        logging.info("\n Weights of relus at init: ", self.weights)
+        logging.info(f"\n Weights of relus at init: {self.weights}")
         logging.info(f"Shift init values from: linspace(start: {linspace_start}, end: {linspace_end}, steps: {num_steps})")
         self.shifts = nn.Parameter(torch.empty((num_steps),))
         with torch.no_grad():
             self.shifts.data = torch.linspace(linspace_start, linspace_end, steps=num_steps)
-        logging.info("\n Shifts of relus at init: ", self.shifts)
+        logging.info(f"\n Shifts of relus at init: {self.shifts}")
  
     def calc_weighted_sum(self, batch: torch.Tensor):   
         shifts = self.shifts.to(batch.get_device())
         weighted_sum = torch.zeros_like(batch)
         for i in range(len(shifts)):
-            shifted_relu = torch.maximum(torch.zeros_like(batch), batch - shifts[i])
+            shifted_relu = torch.maximum(torch.tensor(0).to(batch.get_device()), batch - shifts[i])
             weighted_sum += self.weights[i] * shifted_relu
         return weighted_sum
 
@@ -80,11 +80,11 @@ class ShiftedRelusWeightedSum(nn.Module):
                 len(batch) == 1
             ), "ShiftedRelusWeightedSum input should be either a tensor (2D, 4D) or list containing 1 tensor."
             batch = batch[0]
-        if batch.ndim > 2:
-            assert all(
-                d == 1 for d in batch.shape[2:]
-            ), f"ShiftedRelusWeightedSum expected 2D input tensor or 4D tensor of shape NxCx1x1. got: {batch.shape}"
-            batch = batch.reshape((batch.size(0), batch.size(1)))
+        #if batch.ndim > 2:
+        #    assert all(
+        #        d == 1 for d in batch.shape[2:]
+        #    ), f"ShiftedRelusWeightedSum expected 2D input tensor or 4D tensor of shape NxCx1x1. got: {batch.shape}"
+        #    batch = batch.reshape((batch.size(0), batch.size(1)))
 
         out = self.calc_weighted_sum(batch)
         return out
