@@ -18,6 +18,7 @@ from vissl.hooks.log_hooks import (  # noqa
     LogLossLrEtaHook,
     LogLossMetricsCheckpointHook,
     LogPerfTimeMetricsHook,
+    LogShiftedRelusWeightsHook
 )
 from vissl.hooks.moco_hooks import MoCoHook  # noqa
 from vissl.hooks.model_output_mask_hook import ModelOutputMaskHook
@@ -103,6 +104,9 @@ def default_hook_generator(cfg: AttrDict) -> List[ClassyHook]:
         hooks (List(functions)): list containing the hook functions that will be used
     """
     hooks = []
+
+    if cfg.MODEL.TRUNK.RESNETS.REPLACE_LAST_RELU:
+        hooks.append(LogShiftedRelusWeightsHook())
 
     # conditionally add hooks based on use-case
     if cfg.HOOKS.PERF_STATS.MONITOR_PERF_STATS:

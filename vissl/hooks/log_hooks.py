@@ -578,3 +578,41 @@ class LogPerfTimeMetricsHook(ClassyHook):
                     get_rank(), task.perf_stats.report_str()
                 )
             )
+
+
+class LogShiftedRelusWeightsHook(ClassyHook):
+    """
+    Prints the weights of ShiftedRelusWeightedSum module, if used. Logs at the start of a phase
+    and after every optimization step.
+    """
+
+    on_start = ClassyHook._noop
+    on_phase_start = ClassyHook._noop
+    on_forward = ClassyHook._noop
+    on_loss_and_meter = ClassyHook._noop
+    on_backward = ClassyHook._noop
+    on_phase_end = ClassyHook._noop
+    on_end = ClassyHook._noop
+    on_update = ClassyHook._noop
+    on_step = ClassyHook._noop
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def on_phase_start(self, task: "tasks.ClassyTask") -> None:
+        if is_primary():
+            logging.info(f"Shifted Relus Weights at phase start: {task.base_model.trunk._feature_blocks.layer4[2].relu.weights}")
+
+    def on_phase_end(self, task: "tasks.ClassyTask") -> None:
+        if is_primary():
+            logging.info(f"Shifted Relus Weights at phase end: {task.base_model.trunk._feature_blocks.layer4[2].relu.weights}")
+
+    def on_step(self, task: "tasks.ClassyTask") -> None:
+        if is_primary():
+            if (
+                (task.iteration == 1)
+                or (task.iteration % task.config["LOG_FREQUENCY"] == 0)
+                or (task.iteration <= 100 and task.iteration % 5 == 0)
+            ):
+                logging.info(f"Shifted Relus Weights at iteration {task.iteration}: {task.base_model.trunk._feature_blocks.layer4[2].relu.weights}")
+
