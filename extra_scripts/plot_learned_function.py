@@ -8,11 +8,11 @@ import yaml
 
 plt.style.use("seaborn-poster")
 
-dirs_path = "/home/bbea/vissl/outputs/_on_embeddings/lineareval_shiftedrelusweightedsum_wlinear_without_relu/"
+dirs_path = "/home/bbea/vissl/outputs/lineareval/wr_replaced_multisx_again/"
 config_file = os.path.join(dirs_path, "train_config.yaml")
 with open(config_file, 'r') as stream:
     parsed_yaml=yaml.safe_load(stream)
-shifts_linspace_params = parsed_yaml['MODEL']['HEAD']['PARAMS'][0][1]['shifts_linspace']
+shifts_linspace_params = parsed_yaml['MODEL']['TRUNK']['RESNETS']['SHIFTED_RELUS_WEIGHTED_SUM']['shifts_linspace']
 
 print(shifts_linspace_params)
 shifts = np.linspace(*shifts_linspace_params)
@@ -60,7 +60,8 @@ filenames = []
 for checkpoint_file in phase_checkpoints: 
     print(checkpoint_file)
     phase_checkpoint_dict = torch.load(os.path.join(dirs_path, checkpoint_file))
-    learned_weights = phase_checkpoint_dict['classy_state_dict']['base_model']['model']['heads']['0.shifted_relus_weighted_sum.weights'].cpu().numpy()
+    learned_weights = phase_checkpoint_dict['classy_state_dict']['base_model']['model']['trunk']['_feature_blocks.layer4.2.relu.weights'].cpu().numpy()
+     #['heads']['0.shifted_relus_weighted_sum.weights'].cpu().numpy()
     print("Weights at phase: ", learned_weights)
     name = checkpoint_file.split(".")[0].split("_")[1] 
     save_filename = plot_shifted_relus_weighted_sum(shifts, learned_weights, name)
