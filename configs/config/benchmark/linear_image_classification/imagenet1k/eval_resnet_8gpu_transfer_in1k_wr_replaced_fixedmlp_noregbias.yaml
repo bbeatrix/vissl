@@ -99,7 +99,7 @@ config:
       num_epochs: 28
       nesterov: True
       regularize_bn: False
-      regularize_bias: True
+      regularize_bias: False
       param_schedulers:
         lr:
           auto_lr_scaling:

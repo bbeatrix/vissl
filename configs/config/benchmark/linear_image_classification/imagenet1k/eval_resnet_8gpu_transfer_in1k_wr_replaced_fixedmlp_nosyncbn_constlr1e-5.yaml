@@ -81,7 +81,7 @@ config:
       PARAMS_FILE: ""
       STATE_DICT_KEY_NAME: classy_state_dict
     SYNC_BN_CONFIG:
-      CONVERT_BN_TO_SYNC_BN: True
+      CONVERT_BN_TO_SYNC_BN: False
       SYNC_BN_TYPE: apex
       GROUP_SIZE: 8
     AMP_PARAMS:
@@ -99,16 +99,16 @@ config:
       num_epochs: 28
       nesterov: True
       regularize_bn: False
-      regularize_bias: True
+      regularize_bias: False
       param_schedulers:
         lr:
           auto_lr_scaling:
             auto_scale: true
-            base_value: 0.01
-            base_lr_batch_size: 256
+            base_value: 1e-5
+            base_lr_batch_size: 512
           name: multistep
-          values: [0.01, 0.001, 0.0001, 0.00001]
-          milestones: [8, 16, 24]
+          values: [1e-5,]
+          milestones: []
           update_interval: epoch
   DISTRIBUTED:
     BACKEND: nccl

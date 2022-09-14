@@ -81,7 +81,7 @@ config:
       PARAMS_FILE: ""
       STATE_DICT_KEY_NAME: classy_state_dict
     SYNC_BN_CONFIG:
-      CONVERT_BN_TO_SYNC_BN: True
+      CONVERT_BN_TO_SYNC_BN: False
       SYNC_BN_TYPE: apex
       GROUP_SIZE: 8
     AMP_PARAMS:
@@ -99,7 +99,7 @@ config:
       num_epochs: 28
       nesterov: True
       regularize_bn: False
-      regularize_bias: True
+      regularize_bias: False
       param_schedulers:
         lr:
           auto_lr_scaling:
