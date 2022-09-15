@@ -67,11 +67,12 @@ class LinearEvalMLP(nn.Module):
             mlp_head_state_dict = torch.load("/home/bbea/data/learned_eval_mlp_after_relu.pt", map_location=device)
             logging.info(f"Loaded state dict contains the following paramd: {mlp_head_state_dict.keys()}")
 
-            self.channel_bn.weight.data = mlp_head_state_dict['0.channel_bn.weight'].cpu()
-            self.channel_bn.bias.data = mlp_head_state_dict['0.channel_bn.bias'].cpu()
-            self.channel_bn.running_mean = mlp_head_state_dict['0.channel_bn.running_mean'].cpu()
-            self.channel_bn.running_var = mlp_head_state_dict['0.channel_bn.running_var'].cpu()
-            self.channel_bn.num_batches_tracked = mlp_head_state_dict['0.channel_bn.num_batches_tracked'].cpu()
+            if use_first_bn:
+                self.channel_bn.weight.data = mlp_head_state_dict['0.channel_bn.weight'].cpu()
+                self.channel_bn.bias.data = mlp_head_state_dict['0.channel_bn.bias'].cpu()
+                self.channel_bn.running_mean = mlp_head_state_dict['0.channel_bn.running_mean'].cpu()
+                self.channel_bn.running_var = mlp_head_state_dict['0.channel_bn.running_var'].cpu()
+                self.channel_bn.num_batches_tracked = mlp_head_state_dict['0.channel_bn.num_batches_tracked'].cpu()
             self.clf.clf[0].weight.data = mlp_head_state_dict['0.clf.clf.0.weight'].cpu()
             self.clf.clf[0].bias.data = mlp_head_state_dict['0.clf.clf.0.bias'].cpu()
 
