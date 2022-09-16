@@ -1133,6 +1133,8 @@ config:
     # is wrapped by FSDP with flattening, individual parameters inside the model are
     # replaced with a flattened parameter. Therefore, this option is needed in that case.
     construct_single_param_group_only: False
+    # For eval freeze all bns right before training starts
+    freeze_all_bns: False
 
   # ----------------------------------------------------------------------------------- #
   # Options specific to the "extract_feature" engine

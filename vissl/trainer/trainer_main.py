@@ -170,6 +170,17 @@ class SelfSupervisionTrainer(object):
         # Good to go, (re) start training
         task.run_hooks(SSLClassyHookFunctions.on_start.name)
 
+        if self.cfg["OPTIMIZER"]["freeze_all_bns"] is True:
+            for module in task.model.modules():
+                print(module)
+                if isinstance(module, torch.nn.BatchNorm2d):
+                    module.track_running_stats = False
+                    if hasattr(module, 'weight'):
+                        module.weight.requires_grad_(False)
+                    if hasattr(module, 'bias'):
+                        module.bias.requires_grad_(False)
+                    module.eval()
+
         if is_primary():
             logging.info("Model is:\n {}".format(task.model))
             logging.info("Loss is: {}".format(task.loss))
