@@ -28,7 +28,8 @@ class ShiftedRelusWeightedSum(nn.Module):
         linspace_start=0, 
         linspace_end=2, 
         num_steps=10,
-        weights_init_type="ones"
+        weights_init_type="ones",
+        weight_init_const_value=1.0
     ):
         """
         Args:
@@ -48,8 +49,10 @@ class ShiftedRelusWeightedSum(nn.Module):
             with torch.no_grad():
                 nn.init.zeros_(self.weights)
                 self.weights.data[0] = 1.0
-        elif weights_init_type == "ones":
-            nn.init.ones_(self.weights)
+        elif weights_init_type == "const":
+            with torch.no_grad():
+                nn.init.ones_(self.weights)
+                self.weights.data *= weight_init_const_value   
         else:
             nn.init.uniform_(self.weights)
 

@@ -635,6 +635,7 @@ config:
         SHIFTED_RELUS_WEIGHTED_SUM:
           shifts_linspace: [0, 2, 1]
           weight_init_type: "onehot"
+          weight_init_const_value: 1.0
         USE_SIGN_LAYER: False
         # parameter value of sign function with slope
         SIGN_PARAM_VALUE: 1.0
