@@ -28,8 +28,7 @@ class ShiftedRelusWeightedSum(nn.Module):
         linspace_start=0, 
         linspace_end=2, 
         num_steps=10,
-        weights_init_type="ones",
-        weight_init_const_value=1.0
+        weights_init_type="ones"
     ):
         """
         Args:
@@ -52,7 +51,7 @@ class ShiftedRelusWeightedSum(nn.Module):
         elif weights_init_type == "const":
             with torch.no_grad():
                 nn.init.ones_(self.weights)
-                self.weights.data *= weight_init_const_value   
+                self.weights.data *= model_config.TRUNK.RESNETS.SHIFTED_RELUS_WEIGHTED_SUM["weight_init_const_value"]
         else:
             nn.init.uniform_(self.weights)
 
